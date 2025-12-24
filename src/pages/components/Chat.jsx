@@ -27,13 +27,16 @@ export default function Chat() {
     const socketRef = useRef(null);
 
     useEffect(() => {
-        if (!chatUser) return;
+        if (!chatUser || !user?._id) return;
 
         socketRef.current = io(process.env.NEXT_PUBLIC_BASE_URL, {
             path: "/api/socket",
         });
-        let receiverId = chatUser.userId;
-        socketRef.current.emit("join", receiverId);
+
+        socketRef.current.emit("join", {
+            receiverId: chatUser.userId,
+            conversationId: chatUser._id,
+        });
 
         socketRef.current.on("chatMessage", (msg) => {
             setMessages(prev => [...prev, msg]);
@@ -43,7 +46,6 @@ export default function Chat() {
         return () => {
             socketRef.current.disconnect();
         };
-
     }, [chatUser]);
 
     useEffect(() => {
@@ -188,15 +190,8 @@ export default function Chat() {
             if (data.success) {
                 setInput('');
                 setFile(null);
-                if (data.success) {
-                    setInput('');
-                    setFile(null);
-                    socketRef.current.emit("chatMessage", {
-                        ...data.message,
-                    });
-                    setMessages(prev => [...prev, data.message]);
-                }
-
+                socketRef.current.emit("chatMessage", data.message);
+                setMessages(prev => [...prev, data.message]);
             }
 
         } catch (err) {
