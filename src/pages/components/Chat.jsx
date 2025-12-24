@@ -32,8 +32,8 @@ export default function Chat() {
         socketRef.current = io(process.env.NEXT_PUBLIC_BASE_URL, {
             path: "/api/socket",
         });
-
-        socketRef.current.emit("join", chatUser.userId ? chatUser.userId : chatUser._id);
+        let receiverId = chatUser.userId;
+        socketRef.current.emit("join", receiverId);
 
         socketRef.current.on("chatMessage", (msg) => {
             setMessages(prev => [...prev, msg]);
@@ -47,25 +47,42 @@ export default function Chat() {
     }, [chatUser]);
 
     useEffect(() => {
-        if (!chatUser?._id) return;
-        const fetchMessage = async () => {
-            const res = await fetch('/api/message/seen', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ conversationId: chatUser._id, userId: chatUser?.userId })
-            });
+        if (!chatUser?._id || !user?._id) return;
 
-            const data = await res.json();
-            if (data.success) {
-                setMessages(data.messages);
+        const markMessagesSeen = async () => {
+            try {
+                const res = await fetch('/api/message/seen', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        conversationId: chatUser._id,
+                        userId: chatUser.userId
+                    }),
+                });
+
+                const data = await res.json();
+
+                if (data.success) {
+                    setMessages(prev =>
+                        prev.map(msg =>
+                            msg.conversationId === chatUser._id
+                                ? { ...msg, seen: true }
+                                : msg
+                        )
+                    );
+
+                    socketRef.current?.emit("messagesSeen", {
+                        conversationId: chatUser._id,
+                        seenBy: user._id
+                    });
+                }
+            } catch (err) {
+                console.error("Failed to mark messages as seen:", err);
             }
         };
 
-        fetchMessage();
-    }, [chatUser?._id]);
-
-    console.log(chatUser);
-
+        markMessagesSeen();
+    }, [chatUser?._id, user?._id]);
 
     const updateHistoryFromMessage = (msg) => {
         setHistory(prev => {

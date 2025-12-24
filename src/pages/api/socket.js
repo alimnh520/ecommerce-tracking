@@ -20,7 +20,7 @@ export default function handler(req, res) {
         });
 
         io.on("connection", (socket) => {
-            
+
             console.log("✅ Client connected:", socket.id);
 
             socket.on("join", ({ receiverId, conversationId }) => {
