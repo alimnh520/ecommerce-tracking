@@ -1,4 +1,3 @@
-// pages/api/socket.js
 import { Server } from "socket.io";
 
 export const config = {
@@ -23,17 +22,9 @@ export default function handler(req, res) {
         io.on("connection", (socket) => {
             console.log("✅ Client connected:", socket.id);
 
-            socket.on("join", (userId) => {
-                if (!userId) return;
-                socket.join(userId);
-            });
-
-            socket.on("chatMessage", ({ room, message }) => {
-                if (!room || !message) return;
-                io.to(room).emit("chatMessage", {
-                    id: socket.id,
-                    message,
-                });
+            socket.on("join", (receiverId) => {
+                if (!receiverId) return;
+                socket.join(receiverId);
             });
 
             socket.on("disconnect", () => {

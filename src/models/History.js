@@ -2,9 +2,9 @@ import mongoose from "mongoose";
 
 const ConversationSchema = new mongoose.Schema(
     {
-        members: [
+        participants: [
             {
-                type: mongoose.Schema.Types.ObjectId,
+                type: String,
                 ref: "User",
                 required: true,
             },
@@ -13,7 +13,7 @@ const ConversationSchema = new mongoose.Schema(
         lastMessage: {
             text: String,
             senderId: {
-                type: mongoose.Schema.Types.ObjectId,
+                type: String,
                 ref: "User",
             },
             createdAt: Date,
@@ -23,13 +23,11 @@ const ConversationSchema = new mongoose.Schema(
             type: Map,
             of: Number,
             default: {},
-            // example: { userId: 3 }
         },
     },
     { timestamps: true }
 );
 
-// same user pair এর জন্য duplicate conversation আটকাতে
 ConversationSchema.index({ members: 1 });
 
 export default mongoose.models.Conversation ||

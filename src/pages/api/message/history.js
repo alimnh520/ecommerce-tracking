@@ -17,24 +17,23 @@ export default async function handler(req, res) {
                 .sort({ lastMessageAt: -1 })
                 .toArray();
 
-            const history = [];
+            const history = await Promise.all(
+                conversations.map(async (conv) => {
+                    const otherUserId = conv.participants.find(id => id !== user_id);
 
-            for (let conv of conversations) {
-                const otherUserId = conv.participants.find((id) => id !== user_id);
+                    const otherUser = await userCol.findOne(
+                        { _id: new ObjectId(otherUserId) },
+                        { projection: { password: 0 } }
+                    );
 
-                const otherUser = await userCol.findOne(
-                    { _id: new ObjectId(otherUserId) },
-                    { projection: { password: 0 } }
-                );
-
-                history.push({
-                    ...conv,
-                    userId: otherUserId,
-                    username: otherUser?.username,
-                    image: otherUser?.image || null
-                });
-
-            }
+                    return {
+                        ...conv,
+                        userId: otherUserId,
+                        username: otherUser?.username,
+                        image: otherUser?.image || null,
+                    };
+                })
+            );
             res.status(200).json({ success: true, history });
         } catch (err) {
             console.error(err);

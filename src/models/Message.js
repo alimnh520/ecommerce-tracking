@@ -25,12 +25,12 @@ const MessageSchema = new mongoose.Schema(
             default: null,
         },
 
-        image: {
+        file_url: {
             type: String,
             default: null,
         },
 
-        imageId: {
+        file_id: {
             type: String,
             default: null,
         },

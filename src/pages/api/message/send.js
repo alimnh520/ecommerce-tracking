@@ -1,12 +1,13 @@
 import { getCollection } from "@/lib/mongoclient";
+import { io } from "socket.io-client";
 
 export default async function handler(req, res) {
     if (req.method !== "POST") return res.status(405).end();
 
     try {
-        const { senderId, receiverId, text, image } = req.body;
+        const { senderId, receiverId, text, file_url, file_id } = req.body;
 
-        if (!senderId || !receiverId || (!text && !image)) {
+        if (!senderId || !receiverId || (!text && !file_url)) {
             return res.status(400).json({ success: false });
         }
 
@@ -32,7 +33,8 @@ export default async function handler(req, res) {
             senderId,
             receiverId,
             text: text || null,
-            image: image || null,
+            file_url: file_url || null,
+            file_id: file_id || null,
             seen: false,
             createdAt: new Date(),
         };
@@ -53,8 +55,9 @@ export default async function handler(req, res) {
         );
 
         const io = res.socket.server.io;
+
         if (io) {
-            io.to(receiverId).emit("receiveMessage", newMessage);
+            io.to(receiverId).emit("chatMessage", newMessage);
         }
 
         return res.status(200).json({ success: true, message: newMessage });
