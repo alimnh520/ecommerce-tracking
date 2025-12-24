@@ -1,5 +1,5 @@
+// backend: /api/message/send.js
 import { getCollection } from "@/lib/mongoclient";
-import { io } from "socket.io-client";
 
 export default async function handler(req, res) {
     if (req.method !== "POST") return res.status(405).end();
@@ -53,12 +53,6 @@ export default async function handler(req, res) {
                 },
             }
         );
-
-        const io = res.socket.server.io;
-
-        if (io) {
-            io.to(receiverId).emit("chatMessage", newMessage);
-        }
 
         return res.status(200).json({ success: true, message: newMessage });
     } catch (err) {

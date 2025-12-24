@@ -9,6 +9,7 @@ export default async function handler(req, res) {
         }
 
         try {
+            
             const convCol = await getCollection("conversations");
             const userCol = await getCollection("user");
 

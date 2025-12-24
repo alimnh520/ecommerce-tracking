@@ -37,15 +37,35 @@ export default function Chat() {
 
         socketRef.current.on("chatMessage", (msg) => {
             setMessages(prev => [...prev, msg]);
-
             updateHistoryFromMessage(msg);
         });
-
 
         return () => {
             socketRef.current.disconnect();
         };
+
     }, [chatUser]);
+
+    useEffect(() => {
+        if (!chatUser?._id) return;
+        const fetchMessage = async () => {
+            const res = await fetch('/api/message/seen', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ conversationId: chatUser._id })
+            });
+
+            const data = await res.json();
+            if (data.success) {
+                setMessages(data.messages);
+            }
+        };
+
+        fetchMessage();
+    }, [chatUser?._id]);
+
+    console.log(chatUser);
+
 
     const updateHistoryFromMessage = (msg) => {
         setHistory(prev => {
@@ -154,6 +174,10 @@ export default function Chat() {
                 if (data.success) {
                     setInput('');
                     setFile(null);
+                    socketRef.current.emit("chatMessage", {
+                        ...data.message,
+                    });
+                    setMessages(prev => [...prev, data.message]);
                 }
 
             }
@@ -184,6 +208,7 @@ export default function Chat() {
 
         fetchMessage();
     }, [chatUser?._id]);
+
 
     useEffect(() => {
         if (!user?._id) return;

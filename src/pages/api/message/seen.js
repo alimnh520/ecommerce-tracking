@@ -25,6 +25,7 @@ export default async function handler(req, res) {
             { $set: { seen: true, seenAt: new Date() } }
         );
 
+
         return res.status(200).json({ success: true });
     } catch (err) {
         console.error(err);
