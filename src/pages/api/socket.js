@@ -20,22 +20,23 @@ export default function handler(req, res) {
         });
 
         io.on("connection", (socket) => {
-
             console.log("✅ Client connected:", socket.id);
 
             socket.on("join", ({ receiverId, conversationId }) => {
-                if (receiverId) {
-                    socket.join(receiverId);
-                }
-                if (conversationId && receiverId) {
-                    socket.join(conversationId);
-                }
+                if (receiverId) socket.join(receiverId);
+                if (conversationId && receiverId) socket.join(conversationId);
+            });
+
+            socket.on("chatMessage", (msg) => {
+                if (!msg.receiverId) return;
+                io.to(msg.receiverId).emit("chatMessage", msg);
             });
 
             socket.on("disconnect", () => {
                 console.log("❌ Client disconnected:", socket.id);
             });
         });
+
 
         res.socket.server.io = io;
     } else {
