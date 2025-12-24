@@ -52,7 +52,7 @@ export default function Chat() {
             const res = await fetch('/api/message/seen', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ conversationId: chatUser._id })
+                body: JSON.stringify({ conversationId: chatUser._id, userId: chatUser?.userId })
             });
 
             const data = await res.json();
@@ -390,7 +390,7 @@ export default function Chat() {
                     </div>
 
                     <div className="flex-1 overflow-y-auto p-4 scrollbar" ref={scrollRef}>
-                        {messages.map(msg => {
+                        {messages?.map(msg => {
                             const isSender = msg.senderId === user._id;
                             return (
                                 <div key={msg._id} className={`mb-2 flex sendmessage ${isSender ? "justify-end" : "justify-start"}`}>
