@@ -27,7 +27,7 @@ export default function page() {
 
             if (res.ok) {
                 toast.success("✅ লগইন সফল!", { position: "bottom-right" });
-                router.push("/");
+                window.location.href = '/';
             } else {
                 toast.error(data.message || "❌ লগইন ব্যর্থ!");
             }

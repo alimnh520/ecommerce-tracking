@@ -1,3 +1,4 @@
+// pages/api/socket.js
 import { Server } from "socket.io";
 
 export const config = {
@@ -8,28 +9,41 @@ export const config = {
 
 export default function handler(req, res) {
     if (!res.socket.server.io) {
-        console.log("Initializing Socket.IO server...");
-        const io = new Server(res.socket.server);
+        console.log("🔌 Initializing Socket.IO server...");
+
+        const io = new Server(res.socket.server, {
+            path: "/api/socket",
+            addTrailingSlash: false,
+            cors: {
+                origin: "*",
+                methods: ["GET", "POST"],
+            },
+        });
 
         io.on("connection", (socket) => {
-            console.log("New client connected:", socket.id);
+            console.log("✅ Client connected:", socket.id);
 
-            socket.on("sendMessage", (msg) => {
-                io.emit("receiveMessage", msg);
+            socket.on("join", (userId) => {
+                if (!userId) return;
+                socket.join(userId);
             });
 
-            socket.on("sendLocation", (location) => {
-                io.emit("receiveLocation", location);
+            socket.on("chatMessage", ({ room, message }) => {
+                if (!room || !message) return;
+                io.to(room).emit("chatMessage", {
+                    id: socket.id,
+                    message,
+                });
             });
 
             socket.on("disconnect", () => {
-                console.log("Client disconnected:", socket.id);
+                console.log("❌ Client disconnected:", socket.id);
             });
         });
 
         res.socket.server.io = io;
     } else {
-        console.log("Socket.IO already running");
+        console.log("⚡ Socket.IO already running");
     }
 
     res.end();
