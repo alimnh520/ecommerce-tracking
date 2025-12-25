@@ -26,27 +26,43 @@ export default function Chat() {
 
     const socketRef = useRef(null);
 
-    useEffect(() => {
-        if (!chatUser || !user?._id) return;
+    // useEffect(() => {
+    //     if (!chatUser || !user?._id) return;
 
-        socketRef.current = io(process.env.NEXT_PUBLIC_BASE_URL, {
+    //     socketRef.current = io(process.env.NEXT_PUBLIC_BASE_URL, {
+    //         path: "/api/socket",
+    //     });
+
+    //     socketRef.current.emit("join", {
+    //         receiverId: chatUser.userId,
+    //         conversationId: chatUser._id,
+    //     });
+
+    //     socketRef.current.on("chatMessage", (msg) => {
+    //         setMessages(prev => [...prev, msg]);
+    //         updateHistoryFromMessage(msg);
+    //     });
+
+    //     return () => {
+    //         socketRef.current.disconnect();
+    //     };
+    // }, [chatUser]);
+
+
+    useEffect(() => {
+        // socket connect
+        socketRef.current = io({
             path: "/api/socket",
         });
 
-        socketRef.current.emit("join", {
-            receiverId: chatUser.userId,
-            conversationId: chatUser._id,
-        });
-
-        socketRef.current.on("chatMessage", (msg) => {
+        socketRef.current.on("receiveMessage", (msg) => {
             setMessages(prev => [...prev, msg]);
-            updateHistoryFromMessage(msg);
         });
 
         return () => {
             socketRef.current.disconnect();
         };
-    }, [chatUser]);
+    }, []);
 
     useEffect(() => {
         if (!chatUser?._id || !user?._id) return;
@@ -190,8 +206,8 @@ export default function Chat() {
             if (data.success) {
                 setInput('');
                 setFile(null);
-                socketRef.current.emit("chatMessage", data.message);
-                setMessages(prev => [...prev, data.message]);
+                // socketRef.current.emit("chatMessage", data.message);
+                socketRef.current.emit("sendMessage", data.message);
             }
 
         } catch (err) {

@@ -8,39 +8,28 @@ export const config = {
 
 export default function handler(req, res) {
     if (!res.socket.server.io) {
-        console.log("🔌 Initializing Socket.IO server...");
+        console.log("🟢 Socket server started");
 
         const io = new Server(res.socket.server, {
             path: "/api/socket",
-            addTrailingSlash: false,
             cors: {
                 origin: "*",
-                methods: ["GET", "POST"],
             },
         });
 
         io.on("connection", (socket) => {
-            console.log("✅ Client connected:", socket.id);
+            console.log("✅ User connected:", socket.id);
 
-            socket.on("join", ({ receiverId, conversationId }) => {
-                if (receiverId) socket.join(receiverId);
-                if (conversationId && receiverId) socket.join(conversationId);
-            });
-
-            socket.on("chatMessage", (msg) => {
-                if (!msg.receiverId) return;
-                io.to(msg.receiverId).emit("chatMessage", msg);
+            socket.on("sendMessage", (message) => {
+                io.emit("receiveMessage", message);
             });
 
             socket.on("disconnect", () => {
-                console.log("❌ Client disconnected:", socket.id);
+                console.log("❌ User disconnected:", socket.id);
             });
         });
 
-
         res.socket.server.io = io;
-    } else {
-        console.log("⚡ Socket.IO already running");
     }
 
     res.end();
