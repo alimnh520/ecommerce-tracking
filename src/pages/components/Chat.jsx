@@ -26,81 +26,70 @@ export default function Chat() {
 
     const socketRef = useRef(null);
 
-    // useEffect(() => {
-    //     if (!chatUser || !user?._id) return;
-
-    //     socketRef.current = io(process.env.NEXT_PUBLIC_BASE_URL, {
-    //         path: "/api/socket",
-    //     });
-
-    //     socketRef.current.emit("join", {
-    //         receiverId: chatUser.userId,
-    //         conversationId: chatUser._id,
-    //     });
-
-    //     socketRef.current.on("chatMessage", (msg) => {
-    //         setMessages(prev => [...prev, msg]);
-    //         updateHistoryFromMessage(msg);
-    //     });
-
-    //     return () => {
-    //         socketRef.current.disconnect();
-    //     };
-    // }, [chatUser]);
-
-
     useEffect(() => {
-        // socket connect
+        if (!user?._id) return;
+
         socketRef.current = io({
             path: "/api/socket",
         });
 
         socketRef.current.on("receiveMessage", (msg) => {
             setMessages(prev => [...prev, msg]);
+            updateHistoryFromMessage(msg);
         });
+
+        socketRef.current.on("connect", () => {
+            console.log("✅ Socket connected:", socketRef.current.id);
+            socketRef.current.emit("join", { userId: user._id });
+        });
+
+        console.log("Socket connected?", socketRef.current.connected); // true/false
 
         return () => {
             socketRef.current.disconnect();
         };
-    }, []);
 
-    useEffect(() => {
-        if (!chatUser?._id || !user?._id) return;
+    }, [user]);
 
-        const markMessagesSeen = async () => {
-            try {
-                const res = await fetch('/api/message/seen', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        conversationId: chatUser._id,
-                        userId: chatUser.userId
-                    }),
-                });
 
-                const data = await res.json();
 
-                if (data.success) {
-                    setMessages(prev =>
-                        prev.map(msg =>
-                            msg.conversationId === chatUser._id
-                                ? { ...msg, seen: true }
-                                : msg
-                        )
-                    );
+    // useEffect(() => {
+    //     if (!chatUser?.userId) return;
+    //     const markMessagesSeen = async () => {
+    //         try {
+    //             const res = await fetch('/api/message/seen', {
+    //                 method: 'POST',
+    //                 headers: { 'Content-Type': 'application/json' },
+    //                 body: JSON.stringify({
+    //                     conversationId: chatUser?.userId,
+    //                     userId: chatUser?.userId
+    //                 }),
+    //             });
 
-                    socketRef.current?.emit("messagesSeen", {
-                        conversationId: chatUser._id,
-                        seenBy: user._id
-                    });
-                }
-            } catch (err) {
-                console.error("Failed to mark messages as seen:", err);
-            }
-        };
+    //             const data = await res.json();
 
-        markMessagesSeen();
-    }, [chatUser?._id, user?._id]);
+    //             if (data.success) {
+    //                 setMessages(prev =>
+    //                     prev.map(msg =>
+    //                         msg.conversationId === chatUser?.userId
+    //                             ? { ...msg, seen: true }
+    //                             : msg
+    //                     )
+    //                 );
+
+    //                 socketRef.current?.emit("seenMessage", {
+    //                     conversationId: chatUser?.userId,
+    //                     seenBy: user._id
+    //                 });
+    //             }
+    //         } catch (err) {
+    //             console.error("Failed to mark messages as seen:", err);
+    //         }
+    //     };
+
+    //     markMessagesSeen();
+    // }, [chatUser?.id]);
+
 
     const updateHistoryFromMessage = (msg) => {
         setHistory(prev => {
@@ -133,8 +122,6 @@ export default function Chat() {
             return [newEntry, ...filtered];
         });
     };
-
-
 
     const handleSendMessage = async () => {
         if (!user?._id) return;
@@ -195,7 +182,7 @@ export default function Chat() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     senderId: user._id,
-                    receiverId: chatUser?.userId ? chatUser?.userId : chatUser?._id,
+                    receiverId: chatUser?.userId,
                     text: input || null,
                     file_url,
                     file_id
@@ -203,11 +190,11 @@ export default function Chat() {
             });
 
             const data = await res.json();
+
             if (data.success) {
                 setInput('');
                 setFile(null);
-                // socketRef.current.emit("chatMessage", data.message);
-                socketRef.current.emit("sendMessage", data.message);
+                socketRef.current.emit("sendMessage", { message: data.message });
             }
 
         } catch (err) {
@@ -215,8 +202,9 @@ export default function Chat() {
         }
     };
 
+
     useEffect(() => {
-        if (!chatUser?._id) {
+        if (!chatUser?.userId) {
             setMessages([]);
             return;
         }
@@ -225,7 +213,7 @@ export default function Chat() {
             const res = await fetch('/api/message/messages', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ conversationId: chatUser._id })
+                body: JSON.stringify({ conversationId: chatUser?.userId })
             });
 
             const data = await res.json();
@@ -235,7 +223,7 @@ export default function Chat() {
         };
 
         fetchMessage();
-    }, [chatUser?._id]);
+    }, [chatUser?.userId]);
 
 
     useEffect(() => {
@@ -412,7 +400,7 @@ export default function Chat() {
                             </>
                         )}
 
-                        <Link href={`/components/location/${chatUser?._id}`} className="cursor-pointer self-end ml-auto ">
+                        <Link href={`/components/location/${chatUser?.userId}`} className="cursor-pointer self-end ml-auto ">
                             <FaSearchLocation className="text-gray-600 text-4xl hover:text-indigo-500" />
                         </Link>
                     </div>

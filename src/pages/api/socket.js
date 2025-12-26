@@ -18,10 +18,22 @@ export default function handler(req, res) {
         });
 
         io.on("connection", (socket) => {
+
             console.log("✅ User connected:", socket.id);
 
-            socket.on("sendMessage", (message) => {
-                io.emit("receiveMessage", message);
+            socket.on("join", (data) => {
+                console.log("JOIN DATA:", data);
+                const { userId } = data;
+                if (!userId) {
+                    console.log("❌ userId missing");
+                    return;
+                }
+                socket.join(userId);
+            });
+
+            socket.on("sendMessage", ({ message }) => {
+                console.log('user data is : ', message);
+                io.to(message.receiverId).emit("receiveMessage", message);
             });
 
             socket.on("disconnect", () => {

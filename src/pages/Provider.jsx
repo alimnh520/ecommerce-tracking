@@ -8,6 +8,10 @@ export default function AppProvider({ children }) {
     const [user, setUser] = useState(null);
 
     useEffect(() => {
+        fetch("/api/socket");
+    }, []);
+
+    useEffect(() => {
         const fetchUser = async () => {
             try {
                 const res = await fetch('/api/mydata', { method: 'GET' });
