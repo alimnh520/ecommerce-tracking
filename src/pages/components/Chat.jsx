@@ -20,6 +20,7 @@ export default function Chat() {
     const [searchInput, setSearchInput] = useState("");
     const [isSearch, setIsSearch] = useState(false);
     const [fullView, setFullView] = useState(true);
+    const [mobileView, setMobileView] = useState(true);
 
     const [input, setInput] = useState("");
     const [file, setFile] = useState(null);
@@ -237,7 +238,7 @@ export default function Chat() {
         <div className="h-screen w-full bg-gradient-to-br from-[#1f1c2c] to-[#928DAB] p-4 text-black">
             <div className="mx-auto h-full max-w-5xl rounded-2xl bg-gray-400 shadow-xl overflow-hidden flex">
 
-                <aside className={`${fullView ? 'w-80' : 'w-0'} transition-all duration-300 overflow-hidden border-r border-gray-200 backdrop-blur`}>
+                <aside className={`${fullView ? 'sm:w-80' : 'sm:w-0'} ${mobileView ? 'w-full' : 'w-0'} transition-all duration-300 overflow-hidden border-r border-gray-200 backdrop-blur`}>
                     <div className="p-4 pb-2">
                         <h2 className="text-xl font-semibold">Chats</h2>
                         <div className="mt-3 relative">
@@ -273,6 +274,7 @@ export default function Chat() {
 
                                                     setMessages([]);
                                                 }
+                                                setMobileView(false);
                                                 setIsSearch(false);
                                             }}
                                         >
@@ -308,6 +310,7 @@ export default function Chat() {
         ${conv.userId === chatUser?.userId ? "bg-indigo-50" : ""}`}
                                     onClick={() => {
                                         setChatUser(conv);
+                                        setMobileView(false);
                                     }}
                                 >
                                     <img
@@ -347,10 +350,13 @@ export default function Chat() {
                     </div>
                 </aside>
 
-                {chatUser && (<main className="flex-1 flex flex-col">
+                {chatUser && (<main className={`sm:flex-1 flex flex-col transition-all duration-300 w-0 overflow-hidden ${mobileView ? 'w-0' : 'w-full'}`}>
 
                     <div className="sticky top-0 z-10 flex items-center gap-3 border-b border-gray-200 px-5 py-3 backdrop-blur">
-                        <IoIosArrowBack className={`text-2xl ${fullView ? 'rotate-0' : 'rotate-180'} transition-all duration-300 cursor-pointer`} onClick={() => setFullView(!fullView)} />
+                        <IoIosArrowBack className={`text-2xl ${fullView ? 'rotate-0' : 'rotate-180'} transition-all duration-300 cursor-pointer`} onClick={() => {
+                            setFullView(!fullView);
+                            setMobileView(true);
+                        }} />
                         {chatUser && (
                             <>
                                 <img src={chatUser.image} className="h-10 w-10 rounded-full object-cover" />
