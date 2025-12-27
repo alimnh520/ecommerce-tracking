@@ -22,7 +22,6 @@ export default function handler(req, res) {
             console.log("✅ User connected:", socket.id);
 
             socket.on("join", (data) => {
-                console.log("JOIN DATA:", data);
                 const { userId } = data;
                 if (!userId) {
                     console.log("❌ userId missing");
@@ -32,7 +31,6 @@ export default function handler(req, res) {
             });
 
             socket.on("sendMessage", ({ message }) => {
-                console.log('user data is : ', message);
                 io.to(message.receiverId).emit("receiveMessage", message);
             });
 

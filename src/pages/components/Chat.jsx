@@ -33,62 +33,21 @@ export default function Chat() {
             path: "/api/socket",
         });
 
-        socketRef.current.on("receiveMessage", (msg) => {
-            setMessages(prev => [...prev, msg]);
-            updateHistoryFromMessage(msg);
-        });
-
         socketRef.current.on("connect", () => {
-            console.log("✅ Socket connected:", socketRef.current.id);
             socketRef.current.emit("join", { userId: user._id });
         });
 
-        console.log("Socket connected?", socketRef.current.connected); // true/false
+        socketRef.current.on("receiveMessage", (msg) => {
+            console.log(msg);
+            setMessages(prev => [...prev, msg]);
+            updateHistoryFromMessage(msg);
+        });
 
         return () => {
             socketRef.current.disconnect();
         };
 
     }, [user]);
-
-
-
-    // useEffect(() => {
-    //     if (!chatUser?.userId) return;
-    //     const markMessagesSeen = async () => {
-    //         try {
-    //             const res = await fetch('/api/message/seen', {
-    //                 method: 'POST',
-    //                 headers: { 'Content-Type': 'application/json' },
-    //                 body: JSON.stringify({
-    //                     conversationId: chatUser?.userId,
-    //                     userId: chatUser?.userId
-    //                 }),
-    //             });
-
-    //             const data = await res.json();
-
-    //             if (data.success) {
-    //                 setMessages(prev =>
-    //                     prev.map(msg =>
-    //                         msg.conversationId === chatUser?.userId
-    //                             ? { ...msg, seen: true }
-    //                             : msg
-    //                     )
-    //                 );
-
-    //                 socketRef.current?.emit("seenMessage", {
-    //                     conversationId: chatUser?.userId,
-    //                     seenBy: user._id
-    //                 });
-    //             }
-    //         } catch (err) {
-    //             console.error("Failed to mark messages as seen:", err);
-    //         }
-    //     };
-
-    //     markMessagesSeen();
-    // }, [chatUser?.id]);
 
 
     const updateHistoryFromMessage = (msg) => {
@@ -116,11 +75,11 @@ export default function Chat() {
                         : (old?.unread || 0) + 1
             };
 
-
             const filtered = prev.filter(h => h.userId !== otherUserId);
 
             return [newEntry, ...filtered];
         });
+        setMessages(prev => [...prev, msg])
     };
 
     const handleSendMessage = async () => {
@@ -195,6 +154,7 @@ export default function Chat() {
                 setInput('');
                 setFile(null);
                 socketRef.current.emit("sendMessage", { message: data.message });
+                updateHistoryFromMessage(data.message);
             }
 
         } catch (err) {
@@ -204,7 +164,8 @@ export default function Chat() {
 
 
     useEffect(() => {
-        if (!chatUser?.userId) {
+
+        if (!chatUser?._id) {
             setMessages([]);
             return;
         }
@@ -213,7 +174,7 @@ export default function Chat() {
             const res = await fetch('/api/message/messages', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ conversationId: chatUser?.userId })
+                body: JSON.stringify({ conversationId: chatUser?._id })
             });
 
             const data = await res.json();
@@ -223,7 +184,7 @@ export default function Chat() {
         };
 
         fetchMessage();
-    }, [chatUser?.userId]);
+    }, [chatUser?._id]);
 
 
     useEffect(() => {
@@ -274,9 +235,9 @@ export default function Chat() {
 
     return (
         <div className="h-screen w-full bg-gradient-to-br from-[#1f1c2c] to-[#928DAB] p-4 text-black">
-            <div className="mx-auto h-full max-w-5xl rounded-2xl bg-white/95 shadow-xl overflow-hidden flex">
+            <div className="mx-auto h-full max-w-5xl rounded-2xl bg-gray-400 shadow-xl overflow-hidden flex">
 
-                <aside className={`${fullView ? 'w-80' : 'w-0'} transition-all duration-300 overflow-hidden border-r border-gray-200 bg-white/70 backdrop-blur`}>
+                <aside className={`${fullView ? 'w-80' : 'w-0'} transition-all duration-300 overflow-hidden border-r border-gray-200 backdrop-blur`}>
                     <div className="p-4 pb-2">
                         <h2 className="text-xl font-semibold">Chats</h2>
                         <div className="mt-3 relative">
@@ -388,7 +349,7 @@ export default function Chat() {
 
                 {chatUser && (<main className="flex-1 flex flex-col">
 
-                    <div className="sticky top-0 z-10 flex items-center gap-3 border-b border-gray-200 bg-white/80 px-5 py-3 backdrop-blur">
+                    <div className="sticky top-0 z-10 flex items-center gap-3 border-b border-gray-200 px-5 py-3 backdrop-blur">
                         <IoIosArrowBack className={`text-2xl ${fullView ? 'rotate-0' : 'rotate-180'} transition-all duration-300 cursor-pointer`} onClick={() => setFullView(!fullView)} />
                         {chatUser && (
                             <>
@@ -405,17 +366,20 @@ export default function Chat() {
                         </Link>
                     </div>
 
-                    <div className="flex-1 overflow-y-auto p-4 scrollbar" ref={scrollRef}>
+                    <div className="flex-1 overflow-y-auto p-4 pl-2 scrollbar" ref={scrollRef}>
                         {messages?.map(msg => {
                             const isSender = msg.senderId === user._id;
                             return (
                                 <div key={msg._id} className={`mb-2 flex sendmessage ${isSender ? "justify-end" : "justify-start"}`}>
                                     <div className="flex flex-col items-end">
-                                        <div className={`rounded-2xl px-3 py-2 text-sm shadow-sm ${isSender ? "bg-indigo-600 text-white" : "bg-gray-100 text-gray-900"}`}>
-                                            {msg.text && <p className="break-words">{msg.text}</p>}
-                                            {msg.file_url && <img src={msg.file_url} alt="sent" className="mt-2 max-w-xs rounded-lg" />}
-                                            <div className="mt-1 text-[10px] select-none flex justify-between items-center">
-                                                <span>{moment(msg.createdAt).format("h:mm A")}</span>
+                                        <div className="flex items-start justify-start gap-1">
+                                            {!isSender && <img src={chatUser.image} alt="user" className="w-5 h-5 mt-px rounded-full object-center object-cover" />}
+                                            <div className={`rounded-2xl px-3 py-2 text-sm shadow-sm ${isSender ? "bg-indigo-600 text-white" : "bg-gray-100 text-gray-900"}`}>
+                                                {msg.text && <p className="break-words">{msg.text}</p>}
+                                                {msg.file_url && <img src={msg.file_url} alt="sent" className="mt-2 max-w-xs rounded-lg" />}
+                                                <div className="mt-1 text-[10px] select-none flex justify-between items-center">
+                                                    <span>{moment(msg.createdAt).format("h:mm A")}</span>
+                                                </div>
                                             </div>
                                         </div>
                                         {isSender && (
@@ -430,7 +394,7 @@ export default function Chat() {
                     </div>
 
                     {/* Composer */}
-                    <div className="border-t border-gray-200 bg-white/80 p-3">
+                    <div className="border-t border-gray-200 p-3">
                         <div className="flex flex-col gap-2 rounded-2xl bg-gray-50 p-2 ring-1 ring-gray-200 relative">
 
                             {/* Image Preview */}
