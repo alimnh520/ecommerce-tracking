@@ -104,13 +104,7 @@ export default function Chat() {
 
 
     const updateHistoryFromMessage = (msg) => {
-        setMessages(prev => {
-            // যদি current chatUser এর সাথে msg মিলছে, seen= true হবে
-            const isCurrentChat = chatUser?.userId === (msg.senderId === user._id ? msg.receiverId : msg.senderId);
-            const updatedMsg = { ...msg, seen: isCurrentChat ? true : msg.seen || false };
-            return [...prev, updatedMsg];
-        });
-
+        setMessages(prev => [...prev, msg]);
         setHistory(prev => {
             const otherUserId =
                 msg.senderId === user._id ? msg.receiverId : msg.senderId;
@@ -132,7 +126,7 @@ export default function Chat() {
                 unread:
                     msg.senderId === user._id
                         ? 0
-                        : (chatUser?.userId === otherUserId ? 0 : (old?.unread || 0) + 1) // current chat হলে unread=0
+                        : (old?.unread || 0) + 1
             };
 
             const filtered = prev.filter(h => h.userId !== otherUserId);
@@ -140,7 +134,6 @@ export default function Chat() {
             return [newEntry, ...filtered];
         });
     };
-
 
     const handleSendMessage = async () => {
         if (!user?._id) return;
