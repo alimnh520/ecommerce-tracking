@@ -262,8 +262,8 @@ export default function Chat() {
 
 
     return (
-        <div className="h-screen w-full bg-gradient-to-br from-[#1f1c2c] to-[#928DAB] p-4 text-black">
-            <div className="mx-auto h-full max-w-5xl rounded-2xl bg-gray-400 shadow-xl overflow-hidden flex">
+        <div className="h-screen w-full bg-gradient-to-br from-[#1f1c2c] to-[#928DAB] sm:p-4 text-black">
+            <div className="mx-auto h-full max-w-5xl sm:rounded-2xl bg-gray-400 shadow-xl overflow-hidden flex">
 
                 <aside className={`${fullView ? 'sm:w-80' : 'sm:w-0'} ${mobileView ? 'w-full' : 'w-0'} transition-all duration-300 overflow-hidden border-r border-gray-200 backdrop-blur`}>
                     <div className="p-4 pb-2">
@@ -408,8 +408,29 @@ export default function Chat() {
                                         <div className="flex items-start justify-start gap-1">
                                             {!isSender && <img src={chatUser.image} alt="user" className="w-5 h-5 mt-px rounded-full object-center object-cover" />}
                                             <div className={`rounded-2xl px-3 py-2 text-sm shadow-sm ${isSender ? "bg-indigo-600 text-white" : "bg-gray-100 text-gray-900"}`}>
-                                                {msg.text && <p className="break-words">{msg.text}</p>}
-                                                {msg.file_url && <img src={msg.file_url} alt="sent" className="mt-2 max-w-xs rounded-lg" />}
+                                                {msg.text && <p className="wrap-break-word">{msg.text}</p>}
+                                                {msg.file_url && (() => {
+                                                    const isVideo = /\.(mp4|webm|mov)$/i.test(msg.file_url); // video extension check
+                                                    if (isVideo) {
+                                                        return (
+                                                            <video
+                                                                src={msg.file_url}
+                                                                controls
+                                                                className="mt-2 w-64 max-w-xs rounded-lg"
+                                                            />
+                                                        );
+                                                    } else {
+                                                        return (
+                                                            <a href={msg.file_url} target="_blank">
+                                                                <img
+                                                                    src={msg.file_url}
+                                                                    alt="sent"
+                                                                    className="mt-2 w-64 max-w-xs rounded-lg"
+                                                                />
+                                                            </a>
+                                                        );
+                                                    }
+                                                })()}
                                                 <div className="mt-1 text-[10px] select-none flex justify-between items-center">
                                                     <span>{moment(msg.createdAt).format("h:mm A")}</span>
                                                 </div>
@@ -459,18 +480,18 @@ export default function Chat() {
 
                                 <input
                                     type="file"
-                                    accept="image/*"
+                                    accept="image/*,video/*"
                                     onChange={e => setFile(e.target.files[0])}
                                     className="hidden"
                                     id="fileInput"
                                 />
+
                                 <label htmlFor="fileInput" className="cursor-pointer self-center flex items-center justify-center">
                                     <FaImage className="text-gray-600 text-3xl hover:text-indigo-500" />
                                 </label>
                                 <button
                                     className={`inline-flex h-9 items-center justify-center rounded-xl px-4 text-sm font-semibold text-white ${input || file ? 'bg-indigo-700' : 'bg-indigo-500 pointer-events-none'}`}
-                                    onClick={(e) => {
-                                        e.preventDefault();
+                                    onClick={() => {
                                         handleSendMessage();
                                     }}
                                     disabled={isUploading}
