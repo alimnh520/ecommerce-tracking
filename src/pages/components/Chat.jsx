@@ -192,9 +192,6 @@ export default function Chat() {
                 setFile(null);
                 socketRef.current.emit("sendMessage", { message: data.message });
                 updateHistoryFromMessage(data.message);
-                if (inputRef.current) {
-                    inputRef.current.focus({ preventScroll: true });
-                }
             }
 
         } catch (err) {
@@ -391,7 +388,7 @@ export default function Chat() {
 
                 {chatUser && (<main className={`sm:flex-1 flex flex-col transition-all duration-300 w-0 overflow-hidden ${mobileView ? 'w-0' : 'w-full'}`}>
 
-                    <div className="sticky top-0 z-10 flex items-center gap-3 border-b border-gray-200 px-5 py-3 backdrop-blur">
+                    <div className="sticky top-20 z-10 flex items-center gap-3 border-b border-gray-200 px-5 py-3 backdrop-blur">
                         <IoIosArrowBack className={`text-2xl ${fullView ? 'rotate-0' : 'rotate-180'} transition-all duration-300 cursor-pointer`} onClick={() => {
                             setFullView(!fullView);
                             setMobileView(true);
@@ -517,14 +514,15 @@ export default function Chat() {
                                 <button
                                     className={`inline-flex h-9 items-center justify-center rounded-xl px-4 text-sm font-semibold text-white ${input || file ? 'bg-indigo-700' : 'bg-indigo-500 pointer-events-none'}`}
                                     onClick={() => {
+                                        if (inputRef.current) {
+                                            inputRef.current.focus({ preventScroll: true });
+                                        }
                                         handleSendMessage();
                                     }}
                                     disabled={isUploading}
                                 >
                                     {isUploading ? "Uploading..." : "Send"}
                                 </button>
-
-
                             </div>
                         </div>
                     </div>
