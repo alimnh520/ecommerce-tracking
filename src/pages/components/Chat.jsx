@@ -51,18 +51,29 @@ export default function Chat() {
         };
     }, [mobileView]);
 
-    const markAsSeen = async () => {
-        if (!chatUser?._id) return;
-        await fetch('/api/message/seen', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ conversationId: chatUser._id, userId: user._id })
-        });
-    };
-
     useEffect(() => {
-        markAsSeen();
-    }, [messages]);
+        if (!socketRef.current) return;
+
+        socketRef.current.on("messagesSeen", ({ conversationId, userId: seenBy }) => {
+            if (chatUser?._id === conversationId) {
+                setMessages(prev =>
+                    prev.map(m => ({
+                        ...m,
+                        seen: true
+                    }))
+                );
+
+                setHistory(prev =>
+                    prev.map(h => {
+                        if (h._id === conversationId) {
+                            return { ...h, unread: 0 };
+                        }
+                        return h;
+                    })
+                );
+            }
+        });
+    }, [chatUser]);
 
 
     useEffect(() => {
@@ -388,7 +399,7 @@ export default function Chat() {
 
                 {chatUser && (<main className={`sm:flex-1 flex flex-col transition-all duration-300 w-0 overflow-hidden ${mobileView ? 'w-0' : 'w-full'}`}>
 
-                    <div className="sticky top-20 z-10 flex items-center gap-3 border-b border-gray-200 px-5 py-3 backdrop-blur">
+                    <div className="sticky sm:top-0 top-16 bg-white z-10 flex items-center gap-3 border-b border-gray-200 px-5 py-3 backdrop-blur">
                         <IoIosArrowBack className={`text-2xl ${fullView ? 'rotate-0' : 'rotate-180'} transition-all duration-300 cursor-pointer`} onClick={() => {
                             setFullView(!fullView);
                             setMobileView(true);

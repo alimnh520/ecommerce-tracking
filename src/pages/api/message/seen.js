@@ -16,7 +16,7 @@ export default async function handler(req, res) {
         const convId = new ObjectId(conversationId);
         const messageCol = await getCollection("messages");
 
-        await messageCol.updateMany(
+        const updateResult = await messageCol.updateMany(
             {
                 conversationId: convId,
                 receiverId: userId,
@@ -25,7 +25,16 @@ export default async function handler(req, res) {
             { $set: { seen: true, seenAt: new Date() } }
         );
 
-        return res.status(200).json({ success: true });
+        const seenMessages = await messageCol.find({
+            conversationId: convId,
+            receiverId: userId
+        }).toArray();
+
+        if (global.io) {
+            global.io.to(conversationId.toString()).emit("messagesSeen", { conversationId, userId });
+        }
+
+        return res.status(200).json({ success: true, seenMessages });
     } catch (err) {
         console.error(err);
         return res.status(500).json({ success: false, message: "Internal Server Error" });
