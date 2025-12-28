@@ -51,32 +51,37 @@ export default function Chat() {
 
 
     const updateHistoryFromMessage = (msg) => {
-        const otherUserId = msg.senderId === user._id ? msg.receiverId : msg.senderId;
+        console.log('message id is : ', msg);
+        setMessages(prev => [...prev, msg]);
+        setHistory(prev => {
+            const otherUserId =
+                msg.senderId === user._id ? msg.receiverId : msg.senderId;
 
-        const old = history.find(h => h.userId === otherUserId);
+            const old = prev.find(h => h.userId === otherUserId);
 
-        const userInfo = old || allUser.find(u => u._id === otherUserId);
+            const userInfo =
+                old ||
+                allUser.find(u => u._id === otherUserId);
 
-        const newEntry = {
-            _id: msg.conversationId || old?._id || Date.now(),
-            userId: otherUserId,
-            username: userInfo?.username || "Unknown",
-            image: userInfo?.image || "/avatar.png",
-            participants: [msg.senderId, msg.receiverId],
-            lastMessage: msg.text || "📷 Image",
-            lastMessageAt: msg.createdAt,
-            unread: msg.senderId === user._id ? 0 : (old?.unread || 0) + 1
-        };
+            const newEntry = {
+                _id: msg.conversationId || old?._id || Date.now(),
+                userId: otherUserId,
+                username: userInfo?.username || "Unknown",
+                image: userInfo?.image || "/avatar.png",
+                participants: [msg.senderId, msg.receiverId],
+                lastMessage: msg.text || "📷 Image",
+                lastMessageAt: msg.createdAt,
+                unread:
+                    msg.senderId === user._id
+                        ? 0
+                        : (old?.unread || 0) + 1
+            };
 
-        // Update history
-        setHistory(prev => [newEntry, ...prev.filter(h => h.userId !== otherUserId)]);
+            const filtered = prev.filter(h => h.userId !== otherUserId);
 
-        // Update messages if chat is open with this user
-        if (chatUser?.userId === otherUserId) {
-            setMessages(prev => [...prev, msg]);
-        }
+            return [newEntry, ...filtered];
+        });
     };
-
 
     const handleSendMessage = async () => {
         if (!user?._id) return;
@@ -446,6 +451,7 @@ export default function Chat() {
                     </div>
 
                 </main>)}
+
 
             </div >
         </div >

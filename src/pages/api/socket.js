@@ -17,27 +17,17 @@ export default function handler(req, res) {
             },
         });
 
-        io.on("connection", (socket) => {
-
-            console.log("✅ User connected:", socket.id);
-
-            socket.on("join", (data) => {
-                const { userId } = data;
-                if (!userId) {
-                    console.log("❌ userId missing");
-                    return;
-                }
+        io.on('connection', (socket) => {
+            socket.on('join', ({ userId }) => {
                 socket.join(userId);
             });
 
-            socket.on("sendMessage", ({ message }) => {
-                io.to(message.receiverId).emit("receiveMessage", message);
-            });
-
-            socket.on("disconnect", () => {
-                console.log("❌ User disconnected:", socket.id);
+            socket.on('sendMessage', ({ message }) => {
+                const receiverId = message.receiverId;
+                io.to(receiverId).emit('receiveMessage', message);
             });
         });
+
 
         res.socket.server.io = io;
     }
