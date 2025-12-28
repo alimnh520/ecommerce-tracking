@@ -28,14 +28,17 @@ export default function Chat() {
     const socketRef = useRef(null);
 
     useEffect(() => {
-        if (!chatUser?.userId) return;
+
+        if (!user?._id) return;
+
+        fetch("/api/socket");
 
         socketRef.current = io({
             path: "/api/socket",
         });
 
         socketRef.current.on("connect", () => {
-            socketRef.current.emit("join", { userId: chatUser.userId });
+            socketRef.current.emit("join", { userId: user._id });
         });
 
         socketRef.current.on("receiveMessage", (msg) => {
@@ -47,9 +50,10 @@ export default function Chat() {
             socketRef.current.disconnect();
         };
 
-    }, [chatUser]);
+    }, [user]);
 
     const updateHistoryFromMessage = (msg) => {
+        setMessages(prev => [...prev, msg]);
         setHistory(prev => {
             const otherUserId =
                 msg.senderId === user._id ? msg.receiverId : msg.senderId;
