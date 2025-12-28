@@ -408,7 +408,7 @@ export default function Chat() {
                                         <div className="flex items-start justify-start gap-1">
                                             {!isSender && <img src={chatUser.image} alt="user" className="w-5 h-5 mt-px rounded-full object-center object-cover" />}
                                             <div className={`rounded-2xl px-3 py-2 text-sm shadow-sm ${isSender ? "bg-indigo-600 text-white" : "bg-gray-100 text-gray-900"}`}>
-                                                {msg.text && <p className="wrap-break-word">{msg.text}</p>}
+                                                {msg.text && <p className="wrap-break-word max-w-64 sm:max-w-96">{msg.text}</p>}
                                                 {msg.file_url && (() => {
                                                     const isVideo = /\.(mp4|webm|mov)$/i.test(msg.file_url); // video extension check
                                                     if (isVideo) {
@@ -416,7 +416,7 @@ export default function Chat() {
                                                             <video
                                                                 src={msg.file_url}
                                                                 controls
-                                                                className="mt-2 w-64 max-w-xs rounded-lg"
+                                                                className="mt-2 w-64 sm:w-96 max-w-xs rounded-lg"
                                                             />
                                                         );
                                                     } else {
@@ -425,7 +425,7 @@ export default function Chat() {
                                                                 <img
                                                                     src={msg.file_url}
                                                                     alt="sent"
-                                                                    className="mt-2 w-64 max-w-xs rounded-lg"
+                                                                    className="mt-2 w-64 sm:w-96 max-w-xs rounded-lg"
                                                                 />
                                                             </a>
                                                         );
