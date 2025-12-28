@@ -39,7 +39,6 @@ export default function Chat() {
         });
 
         socketRef.current.on("receiveMessage", (msg) => {
-            console.log(msg);
             setMessages(prev => [...prev, msg]);
             updateHistoryFromMessage(msg);
         });
@@ -80,7 +79,6 @@ export default function Chat() {
 
             return [newEntry, ...filtered];
         });
-        setMessages(prev => [...prev, msg])
     };
 
     const handleSendMessage = async () => {
