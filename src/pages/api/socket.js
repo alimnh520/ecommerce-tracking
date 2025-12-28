@@ -21,16 +21,17 @@ export default function handler(req, res) {
 
             console.log("✅ User connected:", socket.id);
 
-            socket.on("join", (data) => {
-                const { userId } = data;
-                if (!userId) {
-                    console.log("❌ userId missing");
-                    return;
-                }
-                socket.join(userId);
-            });
+            // socket.on("join", (data) => {
+            //     const { userId } = data;
+            //     if (!userId) {
+            //         console.log("❌ userId missing");
+            //         return;
+            //     }
+            //     socket.join(userId);
+            // });
 
             socket.on("sendMessage", ({ message }) => {
+                console.log('user message is : ', message);
                 io.to(message.receiverId).emit("receiveMessage", message);
             });
 

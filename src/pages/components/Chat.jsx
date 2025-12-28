@@ -28,15 +28,16 @@ export default function Chat() {
     const socketRef = useRef(null);
 
     useEffect(() => {
+        
         if (!user?._id) return;
 
         socketRef.current = io({
             path: "/api/socket",
         });
 
-        socketRef.current.on("connect", () => {
-            socketRef.current.emit("join", { userId: user._id });
-        });
+        // socketRef.current.on("connect", () => {
+        //     socketRef.current.emit("join", { userId: user._id });
+        // });
 
         socketRef.current.on("receiveMessage", (msg) => {
             console.log(msg);
