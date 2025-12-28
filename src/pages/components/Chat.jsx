@@ -52,36 +52,9 @@ export default function Chat() {
     }, [mobileView]);
 
     useEffect(() => {
-        if (!socketRef.current) return;
-
-        socketRef.current.on("messagesSeen", ({ conversationId, userId: seenBy }) => {
-            if (chatUser?._id === conversationId) {
-                setMessages(prev =>
-                    prev.map(m => ({
-                        ...m,
-                        seen: true
-                    }))
-                );
-
-                setHistory(prev =>
-                    prev.map(h => {
-                        if (h._id === conversationId) {
-                            return { ...h, unread: 0 };
-                        }
-                        return h;
-                    })
-                );
-            }
-        });
-    }, [chatUser]);
-
-
-    useEffect(() => {
         if (!user?._id) return;
 
-        socketRef.current = io({
-            path: "/api/socket",
-        });
+        socketRef.current = io({ path: "/api/socket" });
 
         socketRef.current.on("connect", () => {
             socketRef.current.emit("join", { userId: user._id });
@@ -89,17 +62,55 @@ export default function Chat() {
 
         socketRef.current.on("receiveMessage", (msg) => {
             updateHistoryFromMessage(msg);
+
+            // যদি current chat open → seen update
+            if (chatUser?._id === msg.conversationId) {
+                fetch('/api/message/seen', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ conversationId: msg.conversationId, userId: user._id })
+                });
+            }
         });
 
-        return () => {
-            socketRef.current.disconnect();
-        };
+        socketRef.current.on("messagesSeen", ({ conversationId }) => {
+            // sender-side update: messages seen
+            if (chatUser?._id === conversationId) {
+                setMessages(prev => prev.map(m => ({ ...m, seen: true })));
+                setHistory(prev => prev.map(h => {
+                    if (h._id === conversationId) return { ...h, unread: 0 };
+                    return h;
+                }));
+            }
+        });
 
-    }, [user]);
+        return () => socketRef.current.disconnect();
+    }, [user, chatUser]);
+
+
+    const markAsSeen = async () => {
+        if (!chatUser?._id) return;
+
+        await fetch("/api/message/seen", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ conversationId: chatUser._id, userId: user._id })
+        });
+    };
+
+    useEffect(() => {
+        markAsSeen();
+    }, [messages]);
 
 
     const updateHistoryFromMessage = (msg) => {
-        setMessages(prev => [...prev, msg]);
+        setMessages(prev => {
+            // যদি current chatUser এর সাথে msg মিলছে, seen= true হবে
+            const isCurrentChat = chatUser?.userId === (msg.senderId === user._id ? msg.receiverId : msg.senderId);
+            const updatedMsg = { ...msg, seen: isCurrentChat ? true : msg.seen || false };
+            return [...prev, updatedMsg];
+        });
+
         setHistory(prev => {
             const otherUserId =
                 msg.senderId === user._id ? msg.receiverId : msg.senderId;
@@ -121,7 +132,7 @@ export default function Chat() {
                 unread:
                     msg.senderId === user._id
                         ? 0
-                        : (old?.unread || 0) + 1
+                        : (chatUser?.userId === otherUserId ? 0 : (old?.unread || 0) + 1) // current chat হলে unread=0
             };
 
             const filtered = prev.filter(h => h.userId !== otherUserId);
@@ -129,6 +140,7 @@ export default function Chat() {
             return [newEntry, ...filtered];
         });
     };
+
 
     const handleSendMessage = async () => {
         if (!user?._id) return;
@@ -203,7 +215,18 @@ export default function Chat() {
                 setFile(null);
                 socketRef.current.emit("sendMessage", { message: data.message });
                 updateHistoryFromMessage(data.message);
+                if (chatUser?._id === data.message.conversationId) {
+                    await fetch('/api/message/seen', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            conversationId: data.message.conversationId,
+                            userId: user._id
+                        })
+                    });
+                }
             }
+
 
         } catch (err) {
             console.error("Send message error:", err);
@@ -399,7 +422,7 @@ export default function Chat() {
 
                 {chatUser && (<main className={`sm:flex-1 flex flex-col transition-all duration-300 w-0 overflow-hidden ${mobileView ? 'w-0' : 'w-full'}`}>
 
-                    <div className="sticky sm:top-0 top-16 bg-white z-10 flex items-center gap-3 border-b border-gray-200 px-5 py-3 backdrop-blur">
+                    <div className="sticky sm:top-0 top-0 bg-white z-10 flex items-center gap-3 border-b border-gray-200 px-5 py-3 backdrop-blur">
                         <IoIosArrowBack className={`text-2xl ${fullView ? 'rotate-0' : 'rotate-180'} transition-all duration-300 cursor-pointer`} onClick={() => {
                             setFullView(!fullView);
                             setMobileView(true);
