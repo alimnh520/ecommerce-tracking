@@ -26,7 +26,35 @@ export default function Chat() {
     const [file, setFile] = useState(null);
     const [isUploading, setIsUploading] = useState(false);
 
+    const inputRef = useRef(null);
     const socketRef = useRef(null);
+
+    if (inputRef.current) {
+        inputRef.current.focus();
+    }
+
+    useEffect(() => {
+        if (typeof window === "undefined") return;
+
+        const handlePopState = (e) => {
+            if (!mobileView) {
+                e.preventDefault(); // normal back এলে browser back stop
+                setMobileView(true); // mobile view ফিরিয়ে দাও
+                window.history.pushState(null, document.title, window.location.href); // back push করে রাখ
+            } else {
+                // যদি mobileView already true থাকে, তাহলে browser back চলে যাবে normally
+            }
+        };
+
+        window.history.pushState(null, document.title, window.location.href); // initial push
+
+        window.addEventListener("popstate", handlePopState);
+
+        return () => {
+            window.removeEventListener("popstate", handlePopState);
+        };
+    }, [mobileView]);
+
 
     useEffect(() => {
         if (!user?._id) return;
@@ -421,13 +449,14 @@ export default function Chat() {
 
                             <div className="flex items-end gap-2">
                                 <textarea
+                                    ref={inputRef}
                                     rows={1}
                                     value={input}
                                     onChange={e => setInput(e.target.value)}
                                     placeholder="Aa"
                                     className="flex-1 resize-none bg-transparent px-2 py-2 text-sm outline-none"
-                                    onBlur={e => e.preventDefault()} // prevent blur
                                 />
+
                                 <input
                                     type="file"
                                     accept="image/*"
