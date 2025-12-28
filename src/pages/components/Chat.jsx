@@ -28,10 +28,7 @@ export default function Chat() {
     const socketRef = useRef(null);
 
     useEffect(() => {
-
         if (!user?._id) return;
-
-        fetch("/api/socket");
 
         socketRef.current = io({
             path: "/api/socket",
@@ -42,6 +39,7 @@ export default function Chat() {
         });
 
         socketRef.current.on("receiveMessage", (msg) => {
+            console.log(msg);
             setMessages(prev => [...prev, msg]);
             updateHistoryFromMessage(msg);
         });
@@ -52,8 +50,8 @@ export default function Chat() {
 
     }, [user]);
 
+
     const updateHistoryFromMessage = (msg) => {
-        setMessages(prev => [...prev, msg]);
         setHistory(prev => {
             const otherUserId =
                 msg.senderId === user._id ? msg.receiverId : msg.senderId;
@@ -82,6 +80,7 @@ export default function Chat() {
 
             return [newEntry, ...filtered];
         });
+        setMessages(prev => [...prev, msg])
     };
 
     const handleSendMessage = async () => {

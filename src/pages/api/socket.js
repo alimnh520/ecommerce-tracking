@@ -1,30 +1,37 @@
 import { Server } from "socket.io";
 
-let io;
+export const config = {
+    api: {
+        bodyParser: false,
+    },
+};
 
 export default function handler(req, res) {
     if (!res.socket.server.io) {
-        console.log("Initializing Socket.IO...");
-        io = new Server(res.socket.server, {
-            path: "/api/socketio",
+        console.log("🟢 Socket server started");
+
+        const io = new Server(res.socket.server, {
+            path: "/api/socket",
             cors: {
                 origin: "*",
             },
         });
 
-        // Online users mapping
-
         io.on("connection", (socket) => {
+
             console.log("✅ User connected:", socket.id);
 
-            socket.on("join", ({ userId }) => {
+            socket.on("join", (data) => {
+                const { userId } = data;
+                if (!userId) {
+                    console.log("❌ userId missing");
+                    return;
+                }
                 socket.join(userId);
-                console.log("User joined room:", userId);
             });
 
-            // Send message to a specific user
-            socket.on("sendMessage", ({ receiverId, message }) => {
-                io.to(receiverId).emit("receiveMessage", message);
+            socket.on("sendMessage", ({ message }) => {
+                io.to(message.receiverId).emit("receiveMessage", message);
             });
 
             socket.on("disconnect", () => {
@@ -33,8 +40,7 @@ export default function handler(req, res) {
         });
 
         res.socket.server.io = io;
-    } else {
-        console.log("Socket.IO already running");
     }
+
     res.end();
 }
