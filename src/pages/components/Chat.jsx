@@ -51,7 +51,6 @@ export default function Chat() {
 
 
     const updateHistoryFromMessage = (msg) => {
-        console.log('message id is : ', msg);
         setMessages(prev => [...prev, msg]);
         setHistory(prev => {
             const otherUserId =
@@ -427,6 +426,7 @@ export default function Chat() {
                                     onChange={e => setInput(e.target.value)}
                                     placeholder="Aa"
                                     className="flex-1 resize-none bg-transparent px-2 py-2 text-sm outline-none"
+                                    onBlur={e => e.preventDefault()} // prevent blur
                                 />
                                 <input
                                     type="file"
@@ -440,11 +440,15 @@ export default function Chat() {
                                 </label>
                                 <button
                                     className={`inline-flex h-9 items-center justify-center rounded-xl px-4 text-sm font-semibold text-white ${input || file ? 'bg-indigo-700' : 'bg-indigo-500 pointer-events-none'}`}
-                                    onClick={handleSendMessage}
-                                    disabled={isUploading} // disable button during upload
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        handleSendMessage();
+                                    }}
+                                    disabled={isUploading}
                                 >
                                     {isUploading ? "Uploading..." : "Send"}
                                 </button>
+
 
                             </div>
                         </div>
