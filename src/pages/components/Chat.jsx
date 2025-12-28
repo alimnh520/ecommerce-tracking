@@ -29,18 +29,14 @@ export default function Chat() {
     const inputRef = useRef(null);
     const socketRef = useRef(null);
 
-    if (inputRef.current) {
-        inputRef.current.focus();
-    }
-
     useEffect(() => {
         if (typeof window === "undefined") return;
 
         const handlePopState = (e) => {
             if (!mobileView) {
-                e.preventDefault(); // normal back এলে browser back stop
-                setMobileView(true); // mobile view ফিরিয়ে দাও
-                window.history.pushState(null, document.title, window.location.href); // back push করে রাখ
+                e.preventDefault();
+                setMobileView(true);
+                window.history.pushState(null, document.title, window.location.href);
             } else {
                 // যদি mobileView already true থাকে, তাহলে browser back চলে যাবে normally
             }
@@ -54,6 +50,19 @@ export default function Chat() {
             window.removeEventListener("popstate", handlePopState);
         };
     }, [mobileView]);
+
+    const markAsSeen = async () => {
+        if (!chatUser?._id) return;
+        await fetch('/api/message/seen', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ conversationId: chatUser._id, userId: user._id })
+        });
+    };
+
+    useEffect(() => {
+        markAsSeen();
+    }, [messages]);
 
 
     useEffect(() => {
@@ -183,6 +192,9 @@ export default function Chat() {
                 setFile(null);
                 socketRef.current.emit("sendMessage", { message: data.message });
                 updateHistoryFromMessage(data.message);
+                if (inputRef.current) {
+                    inputRef.current.focus({ preventScroll: true });
+                }
             }
 
         } catch (err) {
@@ -410,7 +422,7 @@ export default function Chat() {
                                             <div className={`rounded-2xl px-3 py-2 text-sm shadow-sm ${isSender ? "bg-indigo-600 text-white" : "bg-gray-100 text-gray-900"}`}>
                                                 {msg.text && <p className="wrap-break-word max-w-64 sm:max-w-96">{msg.text}</p>}
                                                 {msg.file_url && (() => {
-                                                    const isVideo = /\.(mp4|webm|mov)$/i.test(msg.file_url); // video extension check
+                                                    const isVideo = /\.(mp4|webm|mov)$/i.test(msg.file_url);
                                                     if (isVideo) {
                                                         return (
                                                             <video
@@ -431,6 +443,7 @@ export default function Chat() {
                                                         );
                                                     }
                                                 })()}
+
                                                 <div className="mt-1 text-[10px] select-none flex justify-between items-center">
                                                     <span>{moment(msg.createdAt).format("h:mm A")}</span>
                                                 </div>
@@ -451,14 +464,22 @@ export default function Chat() {
                     <div className="border-t border-gray-200 p-3">
                         <div className="flex flex-col gap-2 rounded-2xl bg-gray-50 p-2 ring-1 ring-gray-200 relative">
 
-                            {/* Image Preview */}
+                            {/* File Preview */}
                             {file && (
                                 <div className="relative w-32 h-32">
-                                    <img
-                                        src={URL.createObjectURL(file)}
-                                        alt="preview"
-                                        className="w-full h-full object-cover rounded-lg"
-                                    />
+                                    {file.type.startsWith("video/") ? (
+                                        <video
+                                            src={URL.createObjectURL(file)}
+                                            controls
+                                            className="w-full h-full object-cover rounded-lg"
+                                        />
+                                    ) : (
+                                        <img
+                                            src={URL.createObjectURL(file)}
+                                            alt="preview"
+                                            className="w-full h-full object-cover rounded-lg"
+                                        />
+                                    )}
                                     <button
                                         onClick={() => setFile(null)}
                                         className="absolute -top-2 -right-2 bg-gray-200 rounded-full p-1 hover:bg-gray-300"
@@ -468,6 +489,7 @@ export default function Chat() {
                                 </div>
                             )}
 
+
                             <div className="flex items-end gap-2">
                                 <textarea
                                     ref={inputRef}
@@ -475,7 +497,10 @@ export default function Chat() {
                                     value={input}
                                     onChange={e => setInput(e.target.value)}
                                     placeholder="Aa"
-                                    className="flex-1 resize-none bg-transparent px-2 py-2 text-sm outline-none"
+                                    className="flex-1 resize-none bg-transparent px-2 py-2 text-sm outline-none caret-indigo-600"
+                                    autoComplete="off"
+                                    autoCorrect="off"
+                                    autoCapitalize="sentences"
                                 />
 
                                 <input
