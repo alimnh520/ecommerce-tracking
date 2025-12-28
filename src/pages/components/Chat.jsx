@@ -24,6 +24,7 @@ export default function Chat() {
 
     const [input, setInput] = useState("");
     const [file, setFile] = useState(null);
+    const [isUploading, setIsUploading] = useState(false);
 
     const socketRef = useRef(null);
 
@@ -39,7 +40,6 @@ export default function Chat() {
         });
 
         socketRef.current.on("receiveMessage", (msg) => {
-            setMessages(prev => [...prev, msg]);
             updateHistoryFromMessage(msg);
         });
 
@@ -110,6 +110,8 @@ export default function Chat() {
         let file_id = null;
 
         if (file) {
+            setIsUploading(true); // start loading
+
             const formData = new FormData();
             formData.append("file", file);
             formData.append("upload_preset", "ml_default");
@@ -117,18 +119,16 @@ export default function Chat() {
 
             const response = await fetch(
                 `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUD_NAME}/auto/upload`,
-                {
-                    method: "POST",
-                    body: formData
-                }
+                { method: "POST", body: formData }
             );
 
             const uploadResult = await response.json();
+            setIsUploading(false); // stop loading
 
             if (!uploadResult.secure_url) {
-                throw new Error("Upload failed");
+                alert("Upload failed");
+                return;
             }
-            setFile(null);
 
             file_url = uploadResult.secure_url;
             file_id = uploadResult.public_id;
@@ -439,15 +439,16 @@ export default function Chat() {
                                 <button
                                     className={`inline-flex h-9 items-center justify-center rounded-xl px-4 text-sm font-semibold text-white ${input || file ? 'bg-indigo-700' : 'bg-indigo-500 pointer-events-none'}`}
                                     onClick={handleSendMessage}
+                                    disabled={isUploading} // disable button during upload
                                 >
-                                    Send
+                                    {isUploading ? "Uploading..." : "Send"}
                                 </button>
+
                             </div>
                         </div>
                     </div>
 
                 </main>)}
-
 
             </div >
         </div >
