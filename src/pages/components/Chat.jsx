@@ -22,6 +22,7 @@ export default function Chat() {
     const [fullView, setFullView] = useState(true);
     const [mobileView, setMobileView] = useState(true);
     const [isMobile, setIsMobile] = useState(false);
+    const [isCalling, setIsCalling] = useState(false);
 
 
     const [input, setInput] = useState("");
@@ -622,6 +623,15 @@ export default function Chat() {
                     </div>
 
                 </main>)}
+
+                {isCalling && (
+                    <CallScreen
+                        user={chatUser}
+                        callType="audio"
+                        onEnd={() => setIsCalling(false)}
+                    />
+                )}
+
 
 
             </div >
