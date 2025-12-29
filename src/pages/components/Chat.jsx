@@ -21,6 +21,8 @@ export default function Chat() {
     const [isSearch, setIsSearch] = useState(false);
     const [fullView, setFullView] = useState(true);
     const [mobileView, setMobileView] = useState(true);
+    const [isMobile, setIsMobile] = useState(false);
+
 
     const [input, setInput] = useState("");
     const [file, setFile] = useState(null);
@@ -49,6 +51,25 @@ export default function Chat() {
         };
 
     }, [mobileView]);
+
+    useEffect(() => {
+        if (typeof window === "undefined") return;
+
+        const handleResize = () => {
+            const mobile = window.innerWidth < 660;
+            setIsMobile(mobile);
+
+            if (mobile) {
+                setChatUser(null);
+            }
+        };
+
+        handleResize(); // initial
+        window.addEventListener("resize", handleResize);
+
+        return () => window.removeEventListener("resize", handleResize);
+    }, []);
+
 
     useEffect(() => {
         if (!user?._id) return;
@@ -280,14 +301,9 @@ export default function Chat() {
                 const history = data?.history || [];
 
                 setHistory(history);
-                if (
-                    history.length > 0 &&
-                    typeof window !== "undefined" &&
-                    window.innerWidth > 660
-                ) {
+                if (history.length > 0 && !isMobile) {
                     setChatUser(history[0]);
                 }
-
             } catch (err) {
                 console.error(err);
                 setHistory([]);
@@ -325,15 +341,12 @@ export default function Chat() {
         for (let i = messages.length - 1; i >= 0; i--) {
             const msg = messages[i];
 
-            // sender এর মেসেজ + seen=true
             if (msg.senderId === user._id && msg.seen) {
                 return i;
             }
         }
         return -1;
     })();
-
-    console.log('chat user is : ', chatUser);
 
     return (
         <div className="h-screen w-full bg-gradient-to-br from-[#1f1c2c] to-[#928DAB] sm:p-4 text-black">
