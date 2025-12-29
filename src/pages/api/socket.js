@@ -26,8 +26,14 @@ export default function handler(req, res) {
                 const receiverId = message.receiverId;
                 io.to(receiverId).emit('receiveMessage', message);
             });
-        });
 
+            socket.on("seenMessage", ({ conversationId, senderId }) => {
+                io.to(senderId).emit("seenMessage", {
+                    conversationId
+                });
+            });
+
+        });
 
         res.socket.server.io = io;
     }

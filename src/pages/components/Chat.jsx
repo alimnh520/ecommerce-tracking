@@ -37,12 +37,10 @@ export default function Chat() {
                 e.preventDefault();
                 setMobileView(true);
                 window.history.pushState(null, document.title, window.location.href);
-            } else {
-                // যদি mobileView already true থাকে, তাহলে browser back চলে যাবে normally
             }
         };
 
-        window.history.pushState(null, document.title, window.location.href); // initial push
+        window.history.pushState(null, document.title, window.location.href);
 
         window.addEventListener("popstate", handlePopState);
 
@@ -62,26 +60,24 @@ export default function Chat() {
 
         socketRef.current.on("receiveMessage", (msg) => {
             updateHistoryFromMessage(msg);
-
-            // যদি current chat open → seen update
-            if (chatUser?._id === msg.conversationId) {
-                fetch('/api/message/seen', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ conversationId: msg.conversationId, userId: user._id })
-                });
-            }
         });
 
-        socketRef.current.on("messagesSeen", ({ conversationId }) => {
-            // sender-side update: messages seen
-            if (chatUser?._id === conversationId) {
-                setMessages(prev => prev.map(m => ({ ...m, seen: true })));
-                setHistory(prev => prev.map(h => {
-                    if (h._id === conversationId) return { ...h, unread: 0 };
-                    return h;
-                }));
-            }
+        socketRef.current.on("seenMessage", ({ conversationId }) => {
+            setMessages(prev =>
+                prev.map(m =>
+                    m.conversationId === conversationId
+                        ? { ...m, seen: true }
+                        : m
+                )
+            );
+
+            setHistory(prev =>
+                prev.map(h =>
+                    h._id === conversationId
+                        ? { ...h, unread: 0 }
+                        : h
+                )
+            );
         });
 
         return () => socketRef.current.disconnect();
@@ -94,14 +90,23 @@ export default function Chat() {
         await fetch("/api/message/seen", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ conversationId: chatUser._id, userId: user._id })
+            body: JSON.stringify({
+                conversationId: chatUser._id,
+                userId: user._id
+            })
+        });
+
+        socketRef.current.emit("seenMessage", {
+            conversationId: chatUser._id,
+            senderId: chatUser.userId
         });
     };
 
     useEffect(() => {
-        markAsSeen();
-    }, [messages]);
 
+        markAsSeen();
+
+    }, [messages]);
 
     const updateHistoryFromMessage = (msg) => {
         setMessages(prev => [...prev, msg]);
@@ -124,9 +129,11 @@ export default function Chat() {
                 lastMessage: msg.text || "📷 Image",
                 lastMessageAt: msg.createdAt,
                 unread:
-                    msg.senderId === user._id
+                    msg.seen
                         ? 0
-                        : (old?.unread || 0) + 1
+                        : msg.senderId === user._id
+                            ? 0
+                            : (old?.unread || 0) + 1
             };
 
             const filtered = prev.filter(h => h.userId !== otherUserId);
@@ -164,7 +171,7 @@ export default function Chat() {
         let file_id = null;
 
         if (file) {
-            setIsUploading(true); // start loading
+            setIsUploading(true);
 
             const formData = new FormData();
             formData.append("file", file);
@@ -177,7 +184,7 @@ export default function Chat() {
             );
 
             const uploadResult = await response.json();
-            setIsUploading(false); // stop loading
+            setIsUploading(false);
 
             if (!uploadResult.secure_url) {
                 alert("Upload failed");
@@ -208,18 +215,7 @@ export default function Chat() {
                 setFile(null);
                 socketRef.current.emit("sendMessage", { message: data.message });
                 updateHistoryFromMessage(data.message);
-                if (chatUser?._id === data.message.conversationId) {
-                    await fetch('/api/message/seen', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            conversationId: data.message.conversationId,
-                            userId: user._id
-                        })
-                    });
-                }
             }
-
 
         } catch (err) {
             console.error("Send message error:", err);
@@ -228,7 +224,7 @@ export default function Chat() {
 
 
     useEffect(() => {
-
+        setMessages([]);
         if (!chatUser?._id) {
             setMessages([]);
             return;
@@ -248,6 +244,7 @@ export default function Chat() {
         };
 
         fetchMessage();
+
     }, [chatUser?._id]);
 
 
@@ -261,14 +258,25 @@ export default function Chat() {
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ user_id: user._id }),
                 });
+
                 const data = await res.json();
-                setHistory(data?.history);
-                setChatUser(data?.history[0])
+                const history = data?.history || [];
+
+                setHistory(history);
+                if (
+                    history.length > 0 &&
+                    typeof window !== "undefined" &&
+                    window.innerWidth > 660
+                ) {
+                    setChatUser(history[0]);
+                }
+
             } catch (err) {
                 console.error(err);
                 setHistory([]);
             }
         };
+
         fetchHistory();
     }, [user?._id]);
 
@@ -300,8 +308,7 @@ export default function Chat() {
     return (
         <div className="h-screen w-full bg-gradient-to-br from-[#1f1c2c] to-[#928DAB] sm:p-4 text-black">
             <div className="mx-auto h-full max-w-5xl sm:rounded-2xl bg-gray-400 shadow-xl overflow-hidden flex">
-
-                <aside className={`${fullView ? 'sm:w-80' : 'sm:w-0'} ${mobileView ? 'w-full' : 'w-0'} transition-all duration-300 overflow-hidden border-r border-gray-200 backdrop-blur`}>
+                <aside className={` fixed sm:static top-0 left-0 z-20 h-full transform transition-all duration-300 ease-in-out ${mobileView ? 'translate-x-0' : '-translate-x-full'} sm:translate-x-0 w-full backdrop-blur ${fullView ? 'sm:w-80' : 'sm:w-0'} ${mobileView ? 'w-full' : 'w-0'} overflow-hidden border-r border-gray-200`}>
                     <div className="p-4 pb-2">
                         <h2 className="text-xl font-semibold">Chats</h2>
                         <div className="mt-3 relative">
@@ -413,10 +420,10 @@ export default function Chat() {
                     </div>
                 </aside>
 
-                {chatUser && (<main className={`sm:flex-1 flex flex-col transition-all duration-300 w-0 overflow-hidden ${mobileView ? 'w-0' : 'w-full'}`}>
+                {chatUser && (<main className={`sm:flex-1 transition-all duration-300 ${mobileView ? 'hidden sm:flex' : 'flex'} flex flex-col transition-all duration-300 w-0 overflow-hidden ${mobileView ? 'w-0' : 'w-full'}`}>
 
                     <div className="sticky sm:top-0 top-0 bg-white z-10 flex items-center gap-3 border-b border-gray-200 px-5 py-3 backdrop-blur">
-                        <IoIosArrowBack className={`text-2xl ${fullView ? 'rotate-0' : 'rotate-180'} transition-all duration-300 cursor-pointer`} onClick={() => {
+                        <IoIosArrowBack className={`text-2xl ${fullView ? 'rotate-0' : 'rotate-0 sm:rotate-180'} transition-all duration-300 cursor-pointer`} onClick={() => {
                             setFullView(!fullView);
                             setMobileView(true);
                         }} />
@@ -539,7 +546,7 @@ export default function Chat() {
                                     <FaImage className="text-gray-600 text-3xl hover:text-indigo-500" />
                                 </label>
                                 <button
-                                    className={`inline-flex h-9 items-center justify-center rounded-xl px-4 text-sm font-semibold text-white ${input || file ? 'bg-indigo-700' : 'bg-indigo-500 pointer-events-none'}`}
+                                    className={`inline-flex h-9 items-center ${isUploading ? 'pointer-events-none' : 'pointer-events-auto'} justify-center rounded-xl px-4 text-sm font-semibold text-white ${input || file ? 'bg-indigo-700' : 'bg-indigo-500 pointer-events-none'}`}
                                     onClick={() => {
                                         if (inputRef.current) {
                                             inputRef.current.focus({ preventScroll: true });
