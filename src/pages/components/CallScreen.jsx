@@ -19,12 +19,12 @@ export default function CallScreen({
                 {/* User Info */}
                 <div className="flex flex-col items-center mt-10">
                     <img
-                        src={user.image}
-                        alt={user.username}
+                        src={user?.image}
+                        alt={user?.username}
                         className="w-28 h-28 rounded-full object-cover border-4 border-white/20"
                     />
                     <h2 className="mt-4 text-xl font-semibold">
-                        {user.username}
+                        {user?.username}
                     </h2>
                     <p className="text-sm text-gray-300 mt-1">
                         {callType === "video" ? "Video call" : "Audio call"} • Ringing…
