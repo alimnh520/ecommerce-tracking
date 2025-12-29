@@ -116,7 +116,7 @@ export default function Chat() {
         if (!chatUser?._id) return;
 
         await fetch("/api/message/unread", {
-            method: "POST",
+            method: "PATCH",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
                 conversationId: chatUser._id,
@@ -131,7 +131,7 @@ export default function Chat() {
     };
 
     useEffect(() => {
-        
+
         if (!chatUser) return;
 
         unreadMessage();
