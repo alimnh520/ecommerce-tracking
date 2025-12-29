@@ -55,13 +55,9 @@ export default function Chat() {
 
         socketRef.current = io({ path: "/api/socket" });
 
-        socketRef.current.on("connect", () => {
-            socketRef.current.emit("join", { userId: user._id });
-        });
+        socketRef.current.emit("join", { userId: user._id });
 
-        socketRef.current.on("receiveMessage", (msg) => {
-            updateHistoryFromMessage(msg);
-        });
+        socketRef.current.on("receiveMessage", updateHistoryFromMessage);
 
         socketRef.current.on("seenMessage", ({ conversationId }) => {
             setMessages(prev =>
@@ -73,19 +69,8 @@ export default function Chat() {
             );
         });
 
-        socketRef.current.on("unreadMessage", ({ conversationId }) => {
-            setHistory(prev =>
-                prev.map(h =>
-                    h._id === conversationId
-                        ? { ...h, unread: 0 }
-                        : h
-                )
-            );
-        });
-
         return () => socketRef.current.disconnect();
-
-    }, [user, chatUser]);
+    }, [user?._id]);
 
 
     const markAsSeen = async () => {
@@ -107,15 +92,20 @@ export default function Chat() {
     };
 
     useEffect(() => {
-
-        markAsSeen();
-
-    }, [messages]);
-
-    const unreadMessage = async () => {
         if (!chatUser?._id) return;
 
-        await fetch("/api/message/unread", {
+        const hasUnread = messages.some(
+            m => m.senderId === chatUser.userId && !m.seen
+        );
+
+        if (hasUnread) markAsSeen();
+    }, [messages, chatUser?._id]);
+
+
+    useEffect(() => {
+        if (!chatUser?._id) return;
+
+        fetch("/api/message/unread", {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -124,19 +114,16 @@ export default function Chat() {
             })
         });
 
-        socketRef.current.emit("unreadMessage", {
-            conversationId: chatUser._id,
-            senderId: chatUser.userId
-        });
-    };
+        setHistory(prev =>
+            prev.map(h =>
+                h._id === chatUser._id
+                    ? { ...h, unread: 0 }
+                    : h
+            )
+        );
 
-    useEffect(() => {
+    }, [chatUser?._id]);
 
-        if (!chatUser) return;
-
-        unreadMessage();
-
-    }, [chatUser]);
 
     const updateHistoryFromMessage = (msg) => {
         setMessages(prev => [...prev, msg]);
@@ -334,6 +321,18 @@ export default function Chat() {
         u.username.toLowerCase().includes(searchInput.toLowerCase()) && u._id !== user?._id
     );
 
+    const lastReadIndex = (() => {
+        for (let i = messages.length - 1; i >= 0; i--) {
+            const msg = messages[i];
+
+            // sender এর মেসেজ + seen=true
+            if (msg.senderId === user._id && msg.seen) {
+                return i;
+            }
+        }
+        return -1;
+    })();
+
 
     return (
         <div className="h-screen w-full bg-gradient-to-br from-[#1f1c2c] to-[#928DAB] sm:p-4 text-black">
@@ -473,8 +472,12 @@ export default function Chat() {
                     </div>
 
                     <div className="flex-1 overflow-y-auto p-4 pl-2 scrollbar" ref={scrollRef}>
-                        {messages?.map(msg => {
+                        {messages?.map((msg, index) => {
                             const isSender = msg.senderId === user._id;
+                            const showAvatar =
+                                isSender &&
+                                msg.seen &&
+                                index === lastReadIndex;
                             return (
                                 <div key={msg._id} className={`mb-2 flex sendmessage ${isSender ? "justify-end" : "justify-start"}`}>
                                     <div className="flex flex-col items-end">
@@ -510,10 +513,15 @@ export default function Chat() {
                                                 </div>
                                             </div>
                                         </div>
-                                        {isSender && (
-                                            <span className="ml-2 text-[10px] font-semibold">
-                                                {msg.seen ? "Read" : "Unread"}
-                                            </span>
+                                        {showAvatar && (
+                                            <img
+                                                src={chatUser.image}
+                                                alt="user"
+                                                className="w-5 h-5 rounded-full object-cover"
+                                            />
+                                        )}
+                                        {isSender && !msg.seen && (
+                                            <span className="text-[10px] font-semibold">Unread</span>
                                         )}
                                     </div>
                                 </div>

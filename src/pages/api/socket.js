@@ -33,12 +33,6 @@ export default function handler(req, res) {
                 });
             });
 
-            socket.on("unreadMessage", ({ conversationId, senderId }) => {
-                io.to(senderId).emit("unreadMessage", {
-                    conversationId
-                });
-            });
-
         });
 
         res.socket.server.io = io;
