@@ -47,6 +47,7 @@ export default function Chat() {
         return () => {
             window.removeEventListener("popstate", handlePopState);
         };
+
     }, [mobileView]);
 
     useEffect(() => {
@@ -72,7 +73,18 @@ export default function Chat() {
             );
         });
 
+        socketRef.current.on("unreadMessage", ({ conversationId }) => {
+            setHistory(prev =>
+                prev.map(h =>
+                    h._id === conversationId
+                        ? { ...h, unread: 0 }
+                        : h
+                )
+            );
+        });
+
         return () => socketRef.current.disconnect();
+
     }, [user, chatUser]);
 
 
@@ -99,6 +111,32 @@ export default function Chat() {
         markAsSeen();
 
     }, [messages]);
+
+    const unreadMessage = async () => {
+        if (!chatUser?._id) return;
+
+        await fetch("/api/message/unread", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                conversationId: chatUser._id,
+                userId: user._id
+            })
+        });
+
+        socketRef.current.emit("unreadMessage", {
+            conversationId: chatUser._id,
+            senderId: chatUser.userId
+        });
+    };
+
+    useEffect(() => {
+        
+        if (!chatUser) return;
+
+        unreadMessage();
+
+    }, [chatUser]);
 
     const updateHistoryFromMessage = (msg) => {
         setMessages(prev => [...prev, msg]);
