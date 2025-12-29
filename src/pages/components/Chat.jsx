@@ -70,14 +70,6 @@ export default function Chat() {
                         : m
                 )
             );
-
-            setHistory(prev =>
-                prev.map(h =>
-                    h._id === conversationId
-                        ? { ...h, unread: 0 }
-                        : h
-                )
-            );
         });
 
         return () => socketRef.current.disconnect();
