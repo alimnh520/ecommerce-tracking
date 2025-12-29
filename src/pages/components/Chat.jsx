@@ -333,10 +333,11 @@ export default function Chat() {
         return -1;
     })();
 
+    console.log('chat user is : ', chatUser);
 
     return (
         <div className="h-screen w-full bg-gradient-to-br from-[#1f1c2c] to-[#928DAB] sm:p-4 text-black">
-            <div className="mx-auto h-full max-w-5xl sm:rounded-2xl bg-gray-400 shadow-xl overflow-hidden flex">
+            <div className="mx-auto h-full max-w-5xl sm:rounded-2xl shadow-xl overflow-hidden flex sm:border sm:border-gray-200">
                 <aside className={` fixed sm:static top-0 left-0 z-20 h-full transform transition-all duration-300 ease-in-out ${mobileView ? 'translate-x-0' : '-translate-x-full'} sm:translate-x-0 w-full backdrop-blur ${fullView ? 'sm:w-80' : 'sm:w-0'} ${mobileView ? 'w-full' : 'w-0'} overflow-hidden border-r border-gray-200`}>
                     <div className="p-4 pb-2">
                         <h2 className="text-xl font-semibold">Chats</h2>
@@ -351,7 +352,12 @@ export default function Chat() {
                             />
                             {isSearch && (
                                 <div className="absolute top-10 left-0 w-full max-h-80 bg-white rounded-2xl shadow-lg border border-gray-200 p-4 pb-10 overflow-y-auto z-10">
-                                    <button className="absolute bottom-1 left-1/2 -translate-x-1/2 bg-blue-600 text-white size-8 flex items-center justify-center rounded-full" onClick={() => setIsSearch(false)}>
+                                    <button className="absolute bottom-1 left-1/2 -translate-x-1/2 bg-blue-600 text-white size-8 flex items-center justify-center rounded-full" onClick={() => {
+                                        if (window.innerWidth < 660) {
+                                            setChatUser(null);
+                                        }
+                                        setIsSearch(false);
+                                    }}>
                                         <ImCross />
                                     </button>
 
@@ -454,7 +460,10 @@ export default function Chat() {
                     <div className="sticky sm:top-0 top-0 bg-white z-10 flex items-center gap-3 border-b border-gray-200 px-5 py-3 backdrop-blur">
                         <IoIosArrowBack className={`text-2xl ${fullView ? 'rotate-0' : 'rotate-0 sm:rotate-180'} transition-all duration-300 cursor-pointer`} onClick={() => {
                             setFullView(!fullView);
-                            setMobileView(true);
+                            if (window.innerWidth < 660) {
+                                setChatUser(null);
+                                setMobileView(true);
+                            }
                         }} />
                         {chatUser && (
                             <>
