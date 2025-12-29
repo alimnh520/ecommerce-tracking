@@ -25,6 +25,17 @@ const MessageSchema = new mongoose.Schema(
             default: null,
         },
 
+        callType: {
+            type: String,
+            enum: ["audio", "video"],
+            default: null
+        },
+
+        callDuration: {
+            type: Number, // seconds
+            default: 0
+        },
+
         file_url: {
             type: String,
             default: null,

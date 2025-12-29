@@ -337,7 +337,7 @@ export default function Chat() {
 
     return (
         <div className="h-screen w-full bg-gradient-to-br from-[#1f1c2c] to-[#928DAB] sm:p-4 text-black">
-            <div className="mx-auto h-full max-w-5xl sm:rounded-2xl shadow-xl overflow-hidden flex sm:border sm:border-gray-200">
+            <div className="mx-auto h-full max-w-5xl sm:rounded-2xl shadow-xl overflow-hidden flex bg-gray-400">
                 <aside className={` fixed sm:static top-0 left-0 z-20 h-full transform transition-all duration-300 ease-in-out ${mobileView ? 'translate-x-0' : '-translate-x-full'} sm:translate-x-0 w-full backdrop-blur ${fullView ? 'sm:w-80' : 'sm:w-0'} ${mobileView ? 'w-full' : 'w-0'} overflow-hidden border-r border-gray-200`}>
                     <div className="p-4 pb-2">
                         <h2 className="text-xl font-semibold">Chats</h2>
@@ -362,7 +362,7 @@ export default function Chat() {
                                     </button>
 
                                     {filteredUsers.map(u => (
-                                        <div key={u._id} className="flex items-center gap-3 p-2 rounded-xl hover:bg-gray-100 cursor-pointer"
+                                        <div key={u._id} className="flex border-b border-b-gray-400 items-center gap-3 p-2 rounded-xl hover:bg-gray-100 cursor-pointer"
                                             onClick={() => {
                                                 const conv = history.find(v => v.userId === u._id);
 
@@ -411,7 +411,7 @@ export default function Chat() {
                             return (
                                 <button
                                     key={conv.userId}
-                                    className={`w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-indigo-50
+                                    className={`w-full flex items-center gap-3 border-b border-b-gray-100 px-4 py-3 text-left hover:bg-indigo-50
         ${conv.userId === chatUser?.userId ? "bg-indigo-50" : ""}`}
                                     onClick={() => {
                                         setChatUser(conv);
