@@ -39,6 +39,7 @@ export default function Chat() {
             if (!mobileView) {
                 e.preventDefault();
                 setMobileView(true);
+                setChatUser(null);
                 window.history.pushState(null, document.title, window.location.href);
             }
         };
@@ -330,6 +331,8 @@ export default function Chat() {
         fetchAllUsers();
     }, []);
 
+    console.log('user is : ', user);
+
     const scrollRef = useRef(null);
 
     useEffect(() => {
@@ -367,16 +370,7 @@ export default function Chat() {
                                 onChange={e => setSearchInput(e.target.value)}
                             />
                             {isSearch && (
-                                <div className="absolute top-10 left-0 w-full max-h-80 bg-white rounded-2xl shadow-lg border border-gray-200 p-4 pb-10 overflow-y-auto z-10">
-                                    <button className="absolute bottom-1 left-1/2 -translate-x-1/2 bg-blue-600 text-white size-8 flex items-center justify-center rounded-full" onClick={() => {
-                                        if (window.innerWidth < 660) {
-                                            setChatUser(null);
-                                        }
-                                        setIsSearch(false);
-                                    }}>
-                                        <ImCross />
-                                    </button>
-
+                                <div className="absolute top-10 left-0 w-full max-h-80 bg-white rounded-2xl shadow-lg border border-gray-200 p-4 pb-10 overflow-y-auto z-10 scrollbar">
                                     {filteredUsers.map(u => (
                                         <div key={u._id} className="flex border-b border-b-gray-400 items-center gap-3 p-2 rounded-xl hover:bg-gray-100 cursor-pointer"
                                             onClick={() => {
@@ -406,6 +400,18 @@ export default function Chat() {
                                             </div>
                                         </div>
                                     ))}
+
+                                    <button
+                                        className="absolute -bottom-5 left-1/2 -translate-x-1/2 bg-blue-600 text-white w-8 h-8 flex items-center justify-center rounded-full shadow-md hover:bg-blue-700 transition z-20"
+                                        onClick={() => {
+                                            if (window.innerWidth < 660) {
+                                                setChatUser(null);
+                                            }
+                                            setIsSearch(false);
+                                        }}
+                                    >
+                                        <ImCross className="w-4 h-4" />
+                                    </button>
                                 </div>
                             )}
                         </div>

@@ -13,14 +13,16 @@ export default function SignupPage() {
         password: "",
         image: null,
     });
+    const [preview, setPreview] = useState(null); // প্রিভিউ এর জন্য
 
     const router = useRouter();
 
     const handleChange = (e) => {
         const { name, value, files } = e.target;
-
         if (name === "image") {
-            setForm({ ...form, image: files[0] });
+            const file = files[0];
+            setForm({ ...form, image: file });
+            setPreview(file ? URL.createObjectURL(file) : null); // প্রিভিউ সেট
         } else {
             setForm({ ...form, [name]: value });
         }
@@ -31,30 +33,55 @@ export default function SignupPage() {
         setLoading(true);
 
         try {
-            const formData = new FormData();
-            formData.append("username", form.username);
-            formData.append("email", form.email);
-            formData.append("password", form.password);
+            let imageUrl = null;
+            let imageId = null;
+
             if (form.image) {
-                formData.append("image", form.image);
+                const data = new FormData();
+                data.append("file", form.image);
+                data.append("upload_preset", "ml_default");
+                data.append("folder", "users");
+
+                const resCloud = await fetch(
+                    `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUD_NAME}/auto/upload`,
+                    { method: "POST", body: data }
+                );
+
+                const uploadResult = await resCloud.json();
+                if (!uploadResult.secure_url) {
+                    toast.error("⚠️ ছবি আপলোড ব্যর্থ!");
+                    setLoading(false);
+                    return;
+                }
+
+                imageUrl = uploadResult.secure_url;
+                imageId = uploadResult.public_id;
             }
 
             const res = await fetch("/api/signup", {
                 method: "POST",
-                body: formData,
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    username: form.username,
+                    email: form.email,
+                    password: form.password,
+                    imageUrl,
+                    imageId
+                }),
             });
 
-            const data = await res.json();
+            const dataRes = await res.json();
 
             if (res.ok) {
                 toast.success("🎉 একাউন্ট তৈরি সফল!", { position: "bottom-right" });
-                setTimeout(() => router.push("/login"), 1500);
+                setTimeout(() => window.location.href = '/', 500);
             } else {
-                toast.error(data.message || "❌ সাইনআপ ব্যর্থ!");
+                toast.error(dataRes.message || "❌ সাইনআপ ব্যর্থ!");
             }
 
-        } catch (error) {
+        } catch (err) {
             toast.error("⚠️ সার্ভার এরর!", { position: "bottom-right" });
+            console.error(err);
         } finally {
             setLoading(false);
         }
@@ -62,17 +89,13 @@ export default function SignupPage() {
 
     return (
         <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-green-100 via-blue-100 to-purple-200 sm:-mt-16 -mt-14">
-            {/* 🔹 Card */}
             <div className="relative w-full max-w-md bg-white/80 backdrop-blur-xl rounded-3xl shadow-[0_8px_30px_rgba(0,0,0,0.12)] p-8 border border-white/40 transition-all hover:shadow-[0_12px_40px_rgba(0,0,0,0.2)]">
-
-                {/* 🔹 Top Icon */}
                 <div className="flex justify-center mb-6">
                     <div className="bg-gradient-to-r from-green-500 to-blue-500 p-4 rounded-full shadow-md">
                         <FaUserPlus className="text-white text-3xl" />
                     </div>
                 </div>
 
-                {/* 🔹 Title */}
                 <h2 className="text-2xl font-extrabold text-center text-gray-800 mb-1">
                     ✨ Create Account
                 </h2>
@@ -80,9 +103,7 @@ export default function SignupPage() {
                     নতুন একাউন্ট তৈরি করুন
                 </p>
 
-                {/* 🔹 Form */}
                 <form onSubmit={handleSubmit} className="space-y-5">
-                    {/* Username */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                             ইউজারনেম
@@ -94,11 +115,10 @@ export default function SignupPage() {
                             onChange={handleChange}
                             required
                             className="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-white/70 text-gray-800 shadow-inner focus:ring-2 focus:ring-green-400 focus:border-green-400 outline-none transition"
-                            placeholder="nahid_hasan"
+                            placeholder="Your name"
                         />
                     </div>
 
-                    {/* Email */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                             ইমেইল
@@ -114,7 +134,6 @@ export default function SignupPage() {
                         />
                     </div>
 
-                    {/* Password */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                             পাসওয়ার্ড
@@ -130,7 +149,6 @@ export default function SignupPage() {
                         />
                     </div>
 
-                    {/* Image */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                             প্রোফাইল ছবি (ঐচ্ছিক)
@@ -140,11 +158,17 @@ export default function SignupPage() {
                             name="image"
                             accept="image/*"
                             onChange={handleChange}
-                            className="w-full text-sm text-gray-600"
+                            className="w-full text-sm text-gray-600 mb-2"
                         />
+                        {preview && (
+                            <img
+                                src={preview}
+                                alt="Preview"
+                                className="w-24 h-24 object-cover rounded-full mx-auto border border-gray-300"
+                            />
+                        )}
                     </div>
 
-                    {/* Button */}
                     <button
                         type="submit"
                         disabled={loading}
@@ -158,7 +182,6 @@ export default function SignupPage() {
                     </button>
                 </form>
 
-                {/* 🔹 Footer */}
                 <p className="text-center text-xs text-gray-500 mt-6">
                     ইতিমধ্যে একাউন্ট আছে?{" "}
                     <span

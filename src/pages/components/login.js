@@ -133,6 +133,16 @@ export default function page() {
                     </button>
                 </form>
 
+                <p className="text-center text-xs text-gray-500 mt-6">
+                    একাউন্ট নেই?{" "}
+                    <span
+                        onClick={() => router.push("/components/signup")}
+                        className="text-green-600 font-medium cursor-pointer hover:underline"
+                    >
+                        রেজিস্ট্রেশন করুন
+                    </span>
+                </p>
+
                 {/* 🔹 Footer */}
                 <p className="text-center text-xs text-gray-500 mt-6">
                     © {new Date().getFullYear()} — Admin Portal by <span className="text-green-600 font-medium">Nahid Hasan</span>

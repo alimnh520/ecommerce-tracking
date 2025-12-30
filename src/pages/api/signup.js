@@ -1,80 +1,62 @@
 import { connectDB } from "@/lib/connectDb";
-import User from "@/models/User";
-import { NextResponse } from "next/server";
+import { getCollection } from "@/lib/mongoclient";
+import bcrypt from "bcryptjs";
+import jwt from 'jsonwebtoken'
 
 export default async function handler(req, res) {
+    if (req.method !== "POST") {
+        return res.status(405).json({ message: "Method not allowed" });
+    }
 
     try {
-        await connectDB();
-
-        const formData = await req.formData();
-
-        const username = formData.get("username");
-        const email = formData.get("email");
-        const password = formData.get("password");
-        const imageFile = formData.get("image");
+        const { username, email, password, imageUrl, imageId } = await req.body;
 
         if (!username || !email || !password) {
-            return NextResponse.json(
-                { message: "সব ফিল্ড আবশ্যক" },
-                { status: 400 }
-            );
+            return res.status(400).json({ message: "সব ফিল্ড আবশ্যক" });
         }
 
-        const existingUser = await User.findOne({ email });
+        await connectDB();
+        const collection = await getCollection("user");
 
+        const existingUser = await collection.findOne({ email });
         if (existingUser) {
-            return NextResponse.json(
-                { message: "এই ইমেইল আগে থেকেই আছে" },
-                { status: 409 }
-            );
+            return res.status(409).json({ message: "এই ইমেইল আগে থেকেই আছে" });
         }
 
         // const hashedPassword = await bcrypt.hash(password, 10);
 
-        let imageUrl = "";
-        let imageId = "";
-
-        if (imageFile && imageFile.size > 0) {
-            const bytes = await imageFile.arrayBuffer();
-            const buffer = Buffer.from(bytes);
-
-            const uploadResult = await new Promise((resolve, reject) => {
-                cloudinary.uploader
-                    .upload_stream(
-                        {
-                            folder: "users",
-                        },
-                        (error, result) => {
-                            if (error) reject(error);
-                            resolve(result);
-                        }
-                    )
-                    .end(buffer);
-            });
-
-            imageUrl = uploadResult.secure_url;
-            imageId = uploadResult.public_id;
-        }
-
-        await User.create({
+        const result = await collection.insertOne({
             username,
             email,
             password,
-            image: imageUrl,
-            imageId
+            image: imageUrl || "",
+            imageId: imageId || "",
+            createdAt: new Date(),
         });
 
-        return NextResponse.json(
-            { success: true, message: "একাউন্ট তৈরি সফল" },
-            { status: 201 }
+        const userId = result.insertedId;
+
+
+        const token = jwt.sign(
+            { user_id: userId },
+            process.env.JWT_SECRET,
+            { expiresIn: "1d" }
         );
 
-    } catch (error) {
-        console.error("Signup Error:", error);
-        return NextResponse.json(
-            { message: "সার্ভার এরর" },
-            { status: 500 }
+        const isProduction = process.env.NODE_ENV === "production";
+
+        res.setHeader(
+            "Set-Cookie",
+            `muntaha-shop=${token}; Path=/; HttpOnly; SameSite=Strict; Max-Age=86400${isProduction ? "; Secure" : ""}`
         );
+
+        return res.status(201).json({
+            success: true,
+            message: "একাউন্ট তৈরি সফল",
+        });
+
+    } catch (err) {
+        console.error("Signup Error:", err);
+        return res.status(500).json({ message: "সার্ভার এরর" });
     }
 }
