@@ -2,7 +2,8 @@ import { connectDB } from "@/lib/connectDb";
 import User from "@/models/User";
 import { NextResponse } from "next/server";
 
-export async function POST(req) {
+export default async function handler(req, res) {
+
     try {
         await connectDB();
 
