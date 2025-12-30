@@ -23,7 +23,7 @@ export default function Chat() {
     const [mobileView, setMobileView] = useState(true);
     const [isMobile, setIsMobile] = useState(false);
     const [isCalling, setIsCalling] = useState(false);
-
+    const [onlineUsers, setOnlineUsers] = useState([]);
 
     const [input, setInput] = useState("");
     const [file, setFile] = useState(null);
@@ -88,14 +88,34 @@ export default function Chat() {
             );
         });
 
+        socketRef.current.on("online-users", (users) => {
+            setOnlineUsers(users);
+        });
+
         return () => {
             if (socketRef.current) {
                 socketRef.current.disconnect();
                 socketRef.current = null;
             }
         };
-
     }, [user?._id]);
+
+    const getLastSeenText = (lastActiveAt) => {
+        if (!lastActiveAt) return "Offline";
+
+        const now = moment();
+        const last = moment(lastActiveAt);
+        const diffMinutes = now.diff(last, "minutes");
+        const diffHours = now.diff(last, "hours");
+        const diffDays = now.diff(last, "days");
+
+        if (diffMinutes < 1) return "Just now";
+        if (diffMinutes < 60) return `Active ${diffMinutes} min ago`;
+        if (diffHours < 24) return `Active ${diffHours} hr ago`;
+        if (diffDays < 1) return `Last seen ${last.format("h:mm A")}`;
+
+        return "Offline";
+    };
 
 
     const markAsSeen = async () => {
@@ -409,7 +429,19 @@ export default function Chat() {
                                             <img src={u.image} alt={u.username} className="h-10 w-10 rounded-full object-cover" />
                                             <div>
                                                 <p className="font-medium">{u._id === user?._id ? 'You' : u.username}</p>
-                                                <p className="text-xs text-gray-500">{u.online ? "Active now" : "Offline"}</p>
+                                                <p className="text-xs text-gray-500">
+                                                    {onlineUsers.includes(u._id) ? (
+                                                        <span className="flex items-center gap-1 text-green-600">
+                                                            <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                                                            Active now
+                                                        </span>
+                                                    )
+                                                        : (
+                                                            <span className="text-gray-500">
+                                                                {getLastSeenText(chatUser.lastActiveAt)}
+                                                            </span>
+                                                        )}
+                                                </p>
                                             </div>
                                         </div>
                                     ))}
@@ -500,7 +532,20 @@ export default function Chat() {
                                 <img src={chatUser.image} className="h-10 w-10 rounded-full object-cover" />
                                 <div>
                                     <p className="font-semibold">{chatUser.username}</p>
-                                    <p className="text-xs text-gray-500">{chatUser.online ? "Active now" : "Offline"}</p>
+                                    <p className="text-xs text-gray-500">
+                                        {onlineUsers.includes(chatUser.userId)
+                                            ? (
+                                                <span className="flex items-center gap-1 text-green-600">
+                                                    <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                                                    Active now
+                                                </span>
+                                            )
+                                            : (
+                                                <span className="text-gray-500">
+                                                    {getLastSeenText(chatUser.lastActiveAt)}
+                                                </span>
+                                            )}
+                                    </p>
                                 </div>
                             </>
                         )}
