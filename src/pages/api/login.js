@@ -30,7 +30,7 @@ export default async function handler(req, res) {
 
         res.setHeader(
             "Set-Cookie",
-            `muntaha-shop=${token}; Path=/; HttpOnly; SameSite=Strict; Max-Age=86400${isProduction ? "; Secure" : ""}`
+            `chatting-web=${token}; Path=/; HttpOnly; SameSite=Strict; Max-Age=86400${isProduction ? "; Secure" : ""}`
         );
 
         return res.status(200).json({
