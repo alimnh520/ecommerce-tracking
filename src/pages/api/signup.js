@@ -25,30 +25,30 @@ export default async function handler(req, res) {
 
         // const hashedPassword = await bcrypt.hash(password, 10);
 
-        // const result = await collection.insertOne({
-        //     username,
-        //     email,
-        //     password,
-        //     image: imageUrl || "",
-        //     imageId: imageId || "",
-        //     createdAt: new Date(),
-        // });
+        const result = await collection.insertOne({
+            username,
+            email,
+            password,
+            image: imageUrl || "",
+            imageId: imageId || "",
+            createdAt: new Date(),
+        });
 
-        // const userId = result.insertedId;
+        const userId = result.insertedId;
 
 
-        // const token = jwt.sign(
-        //     { user_id: userId },
-        //     process.env.JWT_SECRET,
-        //     { expiresIn: "1d" }
-        // );
+        const token = jwt.sign(
+            { user_id: userId },
+            process.env.JWT_SECRET,
+            { expiresIn: "1d" }
+        );
 
-        // const isProduction = process.env.NODE_ENV === "production";
+        const isProduction = process.env.NODE_ENV === "production";
 
-        // res.setHeader(
-        //     "Set-Cookie",
-        //     `chatting-web=${token}; Path=/; HttpOnly; SameSite=Strict; Max-Age=86400${isProduction ? "; Secure" : ""}`
-        // );
+        res.setHeader(
+            "Set-Cookie",
+            `chatting-web=${token}; Path=/; HttpOnly; SameSite=Strict; Max-Age=86400${isProduction ? "; Secure" : ""}`
+        );
 
         return res.status(201).json({
             success: true,
