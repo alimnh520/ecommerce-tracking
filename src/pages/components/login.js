@@ -53,10 +53,10 @@ export default function page() {
 
                 {/* 🔹 Title */}
                 <h2 className="text-2xl font-extrabold text-center text-gray-800 mb-1">
-                    🛡️ Admin Login
+                    Login Account 
                 </h2>
                 <p className="text-center text-gray-600 mb-6 text-sm">
-                    নিরাপদে আপনার ড্যাশবোর্ডে প্রবেশ করুন
+                    নিরাপদে আপনার মেসেজে প্রবেশ করুন
                 </p>
 
                 {/* 🔹 Form */}

@@ -39,7 +39,7 @@ export default function SignupPage() {
             if (form.image) {
                 const data = new FormData();
                 data.append("file", form.image);
-                data.append("upload_preset", "ml_default");
+                data.append("upload_preset", "my_album_preset");
                 data.append("folder", "users");
 
                 const resCloud = await fetch(
@@ -97,7 +97,7 @@ export default function SignupPage() {
                 </div>
 
                 <h2 className="text-2xl font-extrabold text-center text-gray-800 mb-1">
-                    ✨ Create Account
+                    Create Account
                 </h2>
                 <p className="text-center text-gray-600 mb-6 text-sm">
                     নতুন একাউন্ট তৈরি করুন
@@ -149,25 +149,33 @@ export default function SignupPage() {
                         />
                     </div>
 
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <div className="flex flex-col items-center">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
                             প্রোফাইল ছবি (ঐচ্ছিক)
                         </label>
-                        <input
-                            type="file"
-                            name="image"
-                            accept="image/*"
-                            onChange={handleChange}
-                            className="w-full text-sm text-gray-600 mb-2"
-                        />
+
+                        {/* Custom Upload Button */}
+                        <label className="cursor-pointer bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white font-semibold py-2 px-6 rounded-full shadow-md flex items-center gap-2 transition-all duration-300">
+                            Upload Image
+                            <input
+                                type="file"
+                                name="image"
+                                accept="image/*"
+                                onChange={handleChange}
+                                className="hidden"
+                            />
+                        </label>
+
+                        {/* Preview */}
                         {preview && (
                             <img
                                 src={preview}
                                 alt="Preview"
-                                className="w-24 h-24 object-cover rounded-full mx-auto border border-gray-300"
+                                className="w-28 h-28 object-cover rounded-full mt-3 border-2 border-gray-300 shadow-sm"
                             />
                         )}
                     </div>
+
 
                     <button
                         type="submit"
@@ -185,7 +193,7 @@ export default function SignupPage() {
                 <p className="text-center text-xs text-gray-500 mt-6">
                     ইতিমধ্যে একাউন্ট আছে?{" "}
                     <span
-                        onClick={() => router.push("/login")}
+                        onClick={() => router.push("/components/login")}
                         className="text-green-600 font-medium cursor-pointer hover:underline"
                     >
                         লগইন করুন
