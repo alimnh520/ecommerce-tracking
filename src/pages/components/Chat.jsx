@@ -331,8 +331,6 @@ export default function Chat() {
         fetchAllUsers();
     }, []);
 
-    console.log('user is : ', user);
-
     const scrollRef = useRef(null);
 
     useEffect(() => {
@@ -361,18 +359,33 @@ export default function Chat() {
                     <div className="p-4 pb-2">
                         <h2 className="text-xl font-semibold">Chats</h2>
                         <div className="mt-3 relative">
-                            <input
-                                type="text"
-                                placeholder="Search Messenger"
-                                className="w-full rounded-xl border border-gray-300 px-3 py-2 text-sm outline-none focus:border-indigo-500"
-                                value={searchInput}
-                                onFocus={() => setIsSearch(true)}
-                                onChange={e => setSearchInput(e.target.value)}
-                            />
+                            <div className="relative w-full flex items-center justify-center gap-x-1">
+                                <input
+                                    type="text"
+                                    placeholder="Search Messenger"
+                                    className="flex-1 rounded-xl border border-gray-300 px-3 py-2 text-sm outline-none focus:border-indigo-500"
+                                    value={searchInput}
+                                    onFocus={() => setIsSearch(true)}
+                                    onChange={e => setSearchInput(e.target.value)}
+                                />
+                                {isSearch && (
+                                    <button
+                                        className=" bg-blue-600 text-white w-8 h-8 flex items-center justify-center rounded-full shadow-md hover:bg-blue-700 transition z-20"
+                                        onClick={() => {
+                                            if (window.innerWidth < 660) {
+                                                setChatUser(null);
+                                            }
+                                            setIsSearch(false);
+                                        }}
+                                    >
+                                        <ImCross className="w-4 h-4" />
+                                    </button>
+                                )}
+                            </div>
                             {isSearch && (
-                                <div className="absolute top-10 left-0 w-full max-h-80 bg-white rounded-2xl shadow-lg border border-gray-200 p-4 pb-10 overflow-y-auto z-10 scrollbar">
+                                <div className="absolute top-10 left-0 w-full max-h-80 bg-white rounded-2xl shadow-lg border border-gray-200 p-4 overflow-y-auto z-10 scrollbar">
                                     {filteredUsers.map(u => (
-                                        <div key={u._id} className="flex border-b border-b-gray-400 items-center gap-3 p-2 rounded-xl hover:bg-gray-100 cursor-pointer"
+                                        <div key={u._id} className="flex bg-gray-200 items-center gap-3 p-2 rounded-xl hover:bg-gray-100 cursor-pointer"
                                             onClick={() => {
                                                 const conv = history.find(v => v.userId === u._id);
 
@@ -400,18 +413,6 @@ export default function Chat() {
                                             </div>
                                         </div>
                                     ))}
-
-                                    <button
-                                        className="absolute -bottom-5 left-1/2 -translate-x-1/2 bg-blue-600 text-white w-8 h-8 flex items-center justify-center rounded-full shadow-md hover:bg-blue-700 transition z-20"
-                                        onClick={() => {
-                                            if (window.innerWidth < 660) {
-                                                setChatUser(null);
-                                            }
-                                            setIsSearch(false);
-                                        }}
-                                    >
-                                        <ImCross className="w-4 h-4" />
-                                    </button>
                                 </div>
                             )}
                         </div>
@@ -458,9 +459,16 @@ export default function Chat() {
                                                 {isToday
                                                     ? lastMsgDate.toLocaleTimeString([], {
                                                         hour: "2-digit",
-                                                        minute: "2-digit"
+                                                        minute: "2-digit",
+                                                        hour12: true
                                                     })
-                                                    : lastMsgDate.toLocaleDateString()}
+
+                                                    : lastMsgDate.toLocaleTimeString("en-US", {
+                                                        hour: "2-digit",
+                                                        minute: "2-digit",
+                                                        hour12: true
+                                                    })
+                                                }
                                             </p>
                                         </div>
                                     </div>
