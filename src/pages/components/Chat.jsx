@@ -117,7 +117,6 @@ export default function Chat() {
         return "Offline";
     };
 
-
     const markAsSeen = async () => {
         if (!chatUser?._id) return;
 
@@ -417,6 +416,7 @@ export default function Chat() {
                                                         userId: u._id,
                                                         username: u.username,
                                                         image: u.image,
+                                                        lastActiveAt: u.lastActiveAt,
                                                         participants: [user._id, u._id]
                                                     });
 
@@ -438,7 +438,8 @@ export default function Chat() {
                                                     )
                                                         : (
                                                             <span className="text-gray-500">
-                                                                {getLastSeenText(chatUser.lastActiveAt)}
+                                                                {getLastSeenText(u.lastActiveAt)}
+
                                                             </span>
                                                         )}
                                                 </p>
@@ -692,8 +693,6 @@ export default function Chat() {
                         onEnd={() => setIsCalling(false)}
                     />
                 )}
-
-
 
             </div >
         </div >
