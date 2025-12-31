@@ -22,7 +22,6 @@ export default function Chat() {
     const [fullView, setFullView] = useState(true);
     const [mobileView, setMobileView] = useState(true);
     const [isMobile, setIsMobile] = useState(false);
-    const [isCalling, setIsCalling] = useState(false);
     const [onlineUsers, setOnlineUsers] = useState([]);
 
     const [input, setInput] = useState("");
@@ -31,6 +30,32 @@ export default function Chat() {
 
     const inputRef = useRef(null);
     const socketRef = useRef(null);
+
+    let adminId = "69540c8ce429874f0ece6bcf";
+
+    useEffect(() => {
+
+        if (!user?._id || !allUser) return;
+
+        async function adminData() {
+            const res = await fetch('/api/message/admin', { method: 'GET' });
+            const data = await res.json();
+            if (data.success) {
+                const admin = data.admin
+                setChatUser({
+                    _id: null,
+                    userId: admin._id,
+                    username: admin.username,
+                    image: admin.image,
+                    lastActiveAt: admin.lastActiveAt,
+                    participants: [user._id, admin._id]
+                });
+                setMessages([]);
+            }
+        }
+        adminData();
+
+    }, [user?._id]);
 
     useEffect(() => {
         if (typeof window === "undefined") return;
@@ -179,7 +204,7 @@ export default function Chat() {
 
             const userInfo =
                 old ||
-                allUser.find(u => u._id === otherUserId);
+                allUser?.find(u => u._id === otherUserId);
 
             const newEntry = {
                 _id: msg.conversationId || old?._id || Date.now(),
@@ -342,7 +367,11 @@ export default function Chat() {
             try {
                 const res = await fetch('/api/message/users');
                 const data = await res.json();
-                setAllUser(data.users);
+                if (data.success) {
+                    setAllUser(data.users);
+                } else {
+                    setAllUser([]);
+                }
             } catch (error) {
                 console.error("Error fetching users:", error);
             }
@@ -356,7 +385,7 @@ export default function Chat() {
         if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }, [messages]);
 
-    const filteredUsers = allUser.filter(u =>
+    const filteredUsers = allUser?.filter(u =>
         u.username.toLowerCase().includes(searchInput.toLowerCase()) && u._id !== user?._id
     );
 
@@ -551,9 +580,9 @@ export default function Chat() {
                             </>
                         )}
 
-                        <Link href={`/components/location/${chatUser?.userId}`} className="cursor-pointer self-end ml-auto ">
+                        {adminId !== chatUser?.userId && (<Link href={`/components/location/${chatUser?.userId}`} className="cursor-pointer self-end ml-auto ">
                             <FaSearchLocation className="text-gray-600 text-4xl hover:text-indigo-500" />
-                        </Link>
+                        </Link>)}
                     </div>
 
                     <div className="flex-1 overflow-y-auto p-4 pl-2 scrollbar" ref={scrollRef}>
@@ -685,15 +714,6 @@ export default function Chat() {
                     </div>
 
                 </main>)}
-
-                {isCalling && (
-                    <CallScreen
-                        user={chatUser}
-                        callType="audio"
-                        onEnd={() => setIsCalling(false)}
-                    />
-                )}
-
             </div >
         </div >
     )

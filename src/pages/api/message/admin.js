@@ -4,7 +4,6 @@ import { ObjectId } from "mongodb";
 import cookie from "cookie";
 
 export default async function handler(req, res) {
-
     const verifyToken = (req) => {
         if (!req.headers.cookie) return null;
         const cookies = cookie.parse(req.headers.cookie);
@@ -19,41 +18,49 @@ export default async function handler(req, res) {
 
     const decodedUser = verifyToken(req);
 
-    if (!decodedUser) return res.status(401).json({ error: "Unauthorized or invalid token" });
+    if (!decodedUser) {
+        return res.status(401).json({ error: "Unauthorized or invalid token" });
+    }
+
     const userId = decodedUser.user_id;
+    const adminId = "69540c8ce429874f0ece6bcf"; 
 
     if (req.method === "GET") {
         try {
-            const adminId = "69540c8ce429874f0ece6bcf";
+            if (userId === adminId) {
+                return res.status(403).json({
+                    success: false,
+                    message: "Admin does not need admin data"
+                });
+            }
+
             const collection = await getCollection("user");
 
-            let users = [];
+            const admin = await collection.findOne(
+                { _id: new ObjectId(adminId) },
+                { projection: { password: 0 } }
+            );
 
-            if (String(userId) === String(adminId)) {
-                users = await collection
-                    .find({}, { projection: { password: 0 } })
-                    .sort({ createdAt: -1 })
-                    .toArray();
-            } else {
-                const admin = await collection.findOne(
-                    { _id: new ObjectId(adminId) },
-                    { projection: { password: 0 } }
-                );
-
-                users = admin ? [admin] : [];
+            if (!admin) {
+                return res.status(404).json({
+                    success: false,
+                    message: "Admin not found"
+                });
             }
 
             return res.status(200).json({
                 success: true,
-                users
+                admin
             });
 
-
         } catch (error) {
+            console.error(error);
             return res.status(500).json({
                 success: false,
-                message: "Failed to fetch users"
+                message: "Failed to fetch admin"
             });
         }
     }
+
+    return res.status(405).json({ message: "Method not allowed" });
 }
