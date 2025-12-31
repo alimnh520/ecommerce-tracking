@@ -13,7 +13,7 @@ export default async function handler(req, res) {
     }
 
     try {
-        const collection = await getCollection("user");
+        const collection = await getCollection("riders");
         const user = await collection.findOne({ email });
 
         if (!user || password !== user.password) {

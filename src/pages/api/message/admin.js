@@ -34,7 +34,7 @@ export default async function handler(req, res) {
                 });
             }
 
-            const collection = await getCollection("user");
+            const collection = await getCollection("riders");
 
             const admin = await collection.findOne(
                 { _id: new ObjectId(adminId) },

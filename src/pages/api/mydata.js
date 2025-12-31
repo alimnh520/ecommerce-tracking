@@ -22,7 +22,7 @@ export default async function handler(req, res) {
     switch (req.method) {
         case "GET":
             try {
-                const collection = await getCollection("user");
+                const collection = await getCollection("riders");
                 const user = await collection.findOne(
                     { _id: new ObjectId(decodedUser.user_id) },
                     { projection: { password: 0 } }
@@ -35,7 +35,7 @@ export default async function handler(req, res) {
         case "POST":
             try {
                 const { location } = req.body;
-                const collection = await getCollection("user");
+                const collection = await getCollection("riders");
                 await collection.updateOne(
                     { _id: new ObjectId(decodedUser.user_id) },
                     { $set: { location } }

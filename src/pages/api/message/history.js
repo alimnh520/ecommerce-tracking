@@ -11,7 +11,7 @@ export default async function handler(req, res) {
         try {
             
             const convCol = await getCollection("conversations");
-            const userCol = await getCollection("user");
+            const userCol = await getCollection("riders");
 
             const conversations = await convCol
                 .find({ participants: user_id })

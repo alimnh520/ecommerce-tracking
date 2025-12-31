@@ -27,7 +27,7 @@ export default function handler(req, res) {
                 socket.join(userId);
                 onlineUsers.set(userId, socket.id);
 
-                const users = await getCollection("user");
+                const users = await getCollection("riders");
                 await users.updateOne(
                     { _id: new ObjectId(userId) },
                     {
@@ -71,7 +71,7 @@ export default function handler(req, res) {
                     const [userId] = entry;
                     onlineUsers.delete(userId);
 
-                    const users = await getCollection("user");
+                    const users = await getCollection("riders");
                     await users.updateOne(
                         { _id: new ObjectId(userId) },
                         {

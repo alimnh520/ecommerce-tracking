@@ -10,7 +10,7 @@ export default async function handler(req, res) {
                 return res.status(400).json({ success: false, message: "User ID is required" });
             }
 
-            const collection = await getCollection("user");
+            const collection = await getCollection("riders");
 
             const user = await collection.findOne({ _id: new ObjectId(id) });
 

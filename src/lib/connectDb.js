@@ -18,7 +18,7 @@ export async function connectDB() {
     if (!cached.promise) {
         cached.promise = mongoose
             .connect(MONGODB_URI, {
-                dbName: "chat",
+                dbName: "muntaha",
                 bufferCommands: false,
             })
             .then((mongoose) => {

@@ -25,7 +25,7 @@ export default async function handler(req, res) {
     if (req.method === "GET") {
         try {
             const adminId = "69540c8ce429874f0ece6bcf";
-            const collection = await getCollection("user");
+            const collection = await getCollection("riders");
 
             let users = [];
 
